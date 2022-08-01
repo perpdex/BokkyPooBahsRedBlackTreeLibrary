@@ -18,43 +18,43 @@ contract TestBokkyPooBahsRedBlackTree {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
-    mapping(uint => uint) values;
+    mapping(uint80 => uint) values;
 
-    event Log(string where, uint key, uint value);
+    event Log(string where, uint80 key, uint value);
 
     constructor() public {
     }
-    function root() public view returns (uint _key) {
+    function root() public view returns (uint80 _key) {
         _key = tree.root;
     }
-    function first() public view returns (uint _key) {
+    function first() public view returns (uint80 _key) {
         _key = tree.first();
     }
-    function last() public view returns (uint _key) {
+    function last() public view returns (uint80 _key) {
         _key = tree.last();
     }
-    function next(uint key) public view returns (uint _key) {
+    function next(uint80 key) public view returns (uint80 _key) {
         _key = tree.next(key);
     }
-    function prev(uint key) public view returns (uint _key) {
+    function prev(uint80 key) public view returns (uint80 _key) {
         _key = tree.prev(key);
     }
-    function exists(uint key) public view returns (bool _exists) {
+    function exists(uint80 key) public view returns (bool _exists) {
         _exists = tree.exists(key);
     }
-    function getNode(uint _key) public view returns (uint key, uint parent, uint left, uint right, bool red, uint value) {
+    function getNode(uint80 _key) public view returns (uint80 key, uint80 parent, uint80 left, uint80 right, bool red, uint value) {
         if (tree.exists(_key)) {
             (key, parent, left, right, red) = tree.getNode(_key);
             value = values[_key];
         }
     }
 
-    function insert(uint _key, uint _value) public {
+    function insert(uint80 _key, uint _value) public {
         tree.insert(_key);
         values[_key] = _value;
         emit Log("insert", _key, _value);
     }
-    function remove(uint _key) public {
+    function remove(uint80 _key) public {
         tree.remove(_key);
         emit Log("remove", _key, values[_key]);
         delete values[_key];
