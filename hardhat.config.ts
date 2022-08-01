@@ -1,0 +1,35 @@
+import "@nomiclabs/hardhat-waffle"
+import "@nomicfoundation/hardhat-chai-matchers"
+import "@typechain/hardhat"
+import "solidity-coverage"
+import "hardhat-deploy"
+import { HardhatUserConfig } from "hardhat/config"
+import { resolve } from "path"
+import { config as dotenvConfig } from "dotenv"
+
+dotenvConfig({ path: resolve(__dirname, "./.env") })
+
+const config: HardhatUserConfig = {
+    solidity: {
+        version: "0.8.12",
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200,
+            },
+        },
+    },
+    namedAccounts: {
+        deployer: 0,
+    },
+    networks: {
+        hardhat: {
+            allowUnlimitedContractSize: true,
+        },
+    },
+    typechain: {
+        outDir: "typechain",
+    },
+}
+
+export default config

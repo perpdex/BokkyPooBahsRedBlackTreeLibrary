@@ -1,0 +1,58 @@
+{
+  "name": "BokkyPooBahsRedBlackTreeLibrary",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "solhint 'contracts/**/*.sol'",
+    "test": "hardhat test",
+    "build": "hardhat compile",
+    "coverage": "hardhat coverage",
+    "code-lines": "npx cloc --exclude-dir=test contracts",
+    "prepare": "husky install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@typechain/ethers-v5": "^10.0.0",
+    "@typechain/hardhat": "^6.0.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "^17.0.23",
+    "chai": "^4.3.6",
+    "cloc": "^2.9.0",
+    "dotenv": "^16.0.1",
+    "eslint-config-prettier": "^8.5.0",
+    "ethereum-waffle": "^3.4.4",
+    "ethers": "5.6.1",
+    "hardhat": "^2.10.1",
+    "hardhat-deploy": "^0.11.11",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.0",
+    "prb-math": "^2.4.3",
+    "prettier": "^2.6.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint-plugin-prettier": "0.0.5",
+    "solidity-coverage": "0.7.17",
+    "ts-node": "^10.7.0",
+    "typechain": "^8.0.0",
+    "typescript": "^4.6.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "4.7.0",
+    "solhint": "^3.3.7"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write"
+    ],
+    "*.sol": [
+      "prettier --write",
+      "solhint"
+    ]
+  }
+}
