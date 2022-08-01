@@ -1,6 +1,6 @@
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
-import "BokkyPooBahsRedBlackTreeLibrary.sol";
+import "./BokkyPooBahsRedBlackTreeLibrary.sol";
 
 // ----------------------------------------------------------------------------
 // BokkyPooBah's Red-Black Tree Library v1.0-pre-release-a - Contract for testing
@@ -44,8 +44,7 @@ contract TestBokkyPooBahsRedBlackTree {
     }
     function getNode(uint _key) public view returns (uint key, uint parent, uint left, uint right, bool red, uint value) {
         if (tree.exists(_key)) {
-            BokkyPooBahsRedBlackTreeLibrary.Node memory node = tree.getNode(_key);
-            (key, parent, left, right, red) = (_key, node.parent, node.left, node.right, node.red);
+            (key, parent, left, right, red) = tree.getNode(_key);
             value = values[_key];
         }
     }

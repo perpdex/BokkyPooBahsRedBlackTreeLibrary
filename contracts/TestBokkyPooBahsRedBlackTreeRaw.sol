@@ -1,6 +1,6 @@
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
-import "BokkyPooBahsRedBlackTreeLibrary.sol";
+import "./BokkyPooBahsRedBlackTreeLibrary.sol";
 
 // ----------------------------------------------------------------------------
 // BokkyPooBah's Red-Black Tree Library v1.0-pre-release-a - Contract for testing
