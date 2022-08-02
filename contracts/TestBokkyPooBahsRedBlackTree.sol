@@ -50,13 +50,20 @@ contract TestBokkyPooBahsRedBlackTree {
     }
 
     function insert(uint80 _key, uint _value) public {
-        tree.insert(_key);
+        tree.insert(_key, lessThan, aggregate);
         values[_key] = _value;
         emit Log("insert", _key, _value);
     }
     function remove(uint80 _key) public {
-        tree.remove(_key);
+        tree.remove(_key, aggregate);
         emit Log("remove", _key, values[_key]);
         delete values[_key];
+    }
+
+    function lessThan(uint80 key0, uint80 key1) private pure returns (bool) {
+        return key0 < key1;
+    }
+
+    function aggregate(uint80 key) private {
     }
 }
