@@ -64,6 +64,7 @@ contract TestBokkyPooBahsRedBlackTree {
         return key0 < key1;
     }
 
-    function aggregate(uint80 key) private {
+    function aggregate(uint80 key) private returns (bool) {
+        return true;
     }
 }

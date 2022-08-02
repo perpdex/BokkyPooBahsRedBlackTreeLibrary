@@ -82,7 +82,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         return(key, self.nodes[key].parent, self.nodes[key].left, self.nodes[key].right, self.nodes[key].red);
     }
 
-    function insert(Tree storage self, uint80 key, function (uint80, uint80) view returns (bool) lessThan, function (uint80) aggregate) internal {
+    function insert(Tree storage self, uint80 key, function (uint80, uint80) view returns (bool) lessThan, function (uint80) returns (bool) aggregate) internal {
         require(key != EMPTY);
         require(!exists(self, key));
         uint80 cursor = EMPTY;
@@ -105,7 +105,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
         insertFixup(self, key, aggregate);
     }
-    function remove(Tree storage self, uint80 key, function (uint80) aggregate) internal {
+    function remove(Tree storage self, uint80 key, function (uint80) returns (bool) aggregate) internal {
         require(key != EMPTY);
         require(exists(self, key));
         uint80 probe;
@@ -151,9 +151,9 @@ library BokkyPooBahsRedBlackTreeLibrary {
         _aggregateRecursive(self, yParent, aggregate);
     }
 
-    function _aggregateRecursive(Tree storage self, uint80 key, function (uint80) aggregate) private {
+    function _aggregateRecursive(Tree storage self, uint80 key, function (uint80) returns (bool) aggregate) private {
         while (key != EMPTY) {
-            aggregate(key);
+            if (aggregate(key)) return;
             key = self.nodes[key].parent;
         }
     }
@@ -171,7 +171,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         return key;
     }
 
-    function rotateLeft(Tree storage self, uint80 key, function (uint80) aggregate) private {
+    function rotateLeft(Tree storage self, uint80 key, function (uint80) returns (bool) aggregate) private {
         uint80 cursor = self.nodes[key].right;
         uint80 keyParent = self.nodes[key].parent;
         uint80 cursorLeft = self.nodes[cursor].left;
@@ -192,7 +192,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         aggregate(key);
         aggregate(cursor);
     }
-    function rotateRight(Tree storage self, uint80 key, function (uint80) aggregate) private {
+    function rotateRight(Tree storage self, uint80 key, function (uint80) returns (bool) aggregate) private {
         uint80 cursor = self.nodes[key].left;
         uint80 keyParent = self.nodes[key].parent;
         uint80 cursorRight = self.nodes[cursor].right;
@@ -214,7 +214,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         aggregate(cursor);
     }
 
-    function insertFixup(Tree storage self, uint80 key, function (uint80) aggregate) private {
+    function insertFixup(Tree storage self, uint80 key, function (uint80) returns (bool) aggregate) private {
         uint80 cursor;
         while (key != self.root && self.nodes[self.nodes[key].parent].red) {
             uint80 keyParent = self.nodes[key].parent;
@@ -270,7 +270,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             }
         }
     }
-    function removeFixup(Tree storage self, uint80 key, function (uint80) aggregate) private {
+    function removeFixup(Tree storage self, uint80 key, function (uint80) returns (bool) aggregate) private {
         uint80 cursor;
         while (key != self.root && !self.nodes[key].red) {
             uint80 keyParent = self.nodes[key].parent;
