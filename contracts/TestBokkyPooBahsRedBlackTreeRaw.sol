@@ -18,6 +18,7 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
+    mapping(uint80 => uint256) sums;
 
     event Log(string where, uint80 key, uint value);
 
@@ -41,8 +42,8 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     function exists(uint80 key) public view returns (bool _exists) {
         _exists = tree.exists(key);
     }
-    function getNode(uint80 _key) public view returns (uint80 key, uint80 parent, uint80 left, uint80 right, bool red) {
-        (key, parent, left, right, red) = tree.getNode(_key);
+    function getNode(uint80 _key) public view returns (uint80 key, uint80 parent, uint80 left, uint80 right, bool red, uint8 blackHeight) {
+        (key, parent, left, right, red, blackHeight) = tree.getNode(_key);
     }
 
     function insert(uint80 _key) public {
@@ -54,11 +55,16 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         // emit Log("remove", _key, 0);
     }
 
+    function removeLeft(uint80 _key) public {
+        tree.removeLeft(_key, lessThan, aggregate);
+    }
+
     function lessThan(uint80 key0, uint80 key1) private pure returns (bool) {
         return key0 < key1;
     }
 
     function aggregate(uint80 key) private returns (bool) {
+        sums[key] =
         return true;
     }
 }
