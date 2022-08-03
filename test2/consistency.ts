@@ -29,7 +29,6 @@ describe("consistency", () => {
             expect(leftNode.parent).to.eq(node)
             const leftRes = await checkNode(left)
             leftBlackHeight = leftRes.blackHeight
-            expect(leftBlackHeight).to.eq(leftNode.blackHeight)
         }
         if (!right.eq(0)) {
             const rightNode = await tree.getNode(right)
@@ -39,9 +38,6 @@ describe("consistency", () => {
             expect(rightNode.parent).to.eq(node)
             const rightRes = await checkNode(right)
             rightBlackHeight = rightRes.blackHeight
-            // console.log(rightBlackHeight)
-            // console.log(rightNode)
-            expect(rightBlackHeight).to.eq(rightNode.blackHeight)
         }
         expect(leftBlackHeight).to.eq(rightBlackHeight)
         return {
@@ -52,28 +48,6 @@ describe("consistency", () => {
     const checkRedBlackConditions = async () => {
         const root = await tree.root()
         await checkNode(root)
-
-        // const nodes = [root]
-        // while (nodes.length > 0) {
-        //     const node = nodes.shift()
-        //     const {parent, left, right, red} = await tree.getNode(node)
-        //     if (!left.eq(0)) {
-        //         const leftNode = await tree.getNode(left)
-        //         if (red) {
-        //             expect(leftNode.red).to.eq(false)
-        //         }
-        //         expect(leftNode.parent).to.eq(node)
-        //         nodes.push(left)
-        //     }
-        //     if (!left.eq(0)) {
-        //         const rightNode = await tree.getNode(right)
-        //         if (red) {
-        //             expect(rightNode.red).to.eq(false)
-        //         }
-        //         expect(rightNode.parent).to.eq(node)
-        //         nodes.push(right)
-        //     }
-        // }
     }
 
     const checkConsistency = async () => {

@@ -1,5 +1,5 @@
 pragma solidity ^0.8.0;
-
+import "hardhat/console.sol";
 // ----------------------------------------------------------------------------
 // BokkyPooBah's Red-Black Tree Library v1.0-pre-release-a
 //
@@ -18,7 +18,6 @@ library BokkyPooBahsRedBlackTreeLibrary {
         uint80 parent;
         uint80 left;
         uint80 right;
-        uint8 blackHeight; // from bottom
         bool red;
     }
 
@@ -74,9 +73,9 @@ library BokkyPooBahsRedBlackTreeLibrary {
     function getEmpty() internal pure returns (uint) {
         return EMPTY;
     }
-    function getNode(Tree storage self, uint80 key) internal view returns (uint80 _returnKey, uint80 _parent, uint80 _left, uint80 _right, bool _red, uint8 blackHeight) {
+    function getNode(Tree storage self, uint80 key) internal view returns (uint80 _returnKey, uint80 _parent, uint80 _left, uint80 _right, bool _red) {
         require(exists(self, key));
-        return(key, self.nodes[key].parent, self.nodes[key].left, self.nodes[key].right, self.nodes[key].red, self.nodes[key].blackHeight);
+        return(key, self.nodes[key].parent, self.nodes[key].left, self.nodes[key].right, self.nodes[key].red);
     }
 
     function insert(Tree storage self, uint80 key, function (uint80, uint80) view returns (bool) lessThan, function (uint80) returns (bool) aggregate) internal {
@@ -92,7 +91,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
                 probe = self.nodes[probe].right;
             }
         }
-        self.nodes[key] = Node({parent: cursor, left: EMPTY, right: EMPTY, red: true, blackHeight: 1});
+        self.nodes[key] = Node({parent: cursor, left: EMPTY, right: EMPTY, red: true});
         if (cursor == EMPTY) {
             self.root = key;
         } else if (lessThan(key, cursor)) {
@@ -149,108 +148,161 @@ library BokkyPooBahsRedBlackTreeLibrary {
         _aggregateRecursive(self, yParent, aggregate);
     }
 
-    // destructive func
-    function joinRight(Tree storage self, uint80 left, uint80 key, uint80 right, function (uint80) returns (bool) aggregate) private returns (uint80) {
-        uint8 leftBlackHeight = self.nodes[left].blackHeight;
-        uint8 rightBlackHeight = self.nodes[right].blackHeight;
-
-        if (!self.nodes[left].red && leftBlackHeight == rightBlackHeight) {
-            _setRed(self, key, true);
-            self.nodes[key].left = left;
-            self.nodes[key].right = right;
-            _aggregateBlackHeight(self, key);
-            aggregate(key);
-            return key;
-        }
-
-        uint80 t = joinRight(self, self.nodes[left].right, key, right, aggregate);
-        self.nodes[left].right = t;
-        _aggregateBlackHeight(self, left);
-        aggregate(left);
-
-        if (!self.nodes[left].red && self.nodes[t].red && self.nodes[self.nodes[t].right].red) {
-            rotateLeft(self, left, aggregate);
-            return self.nodes[left].parent;
-        }
-        return left;
+    // to avoid stack too deep
+    struct JoinParams {
+        uint80 left; uint80 key; uint80 right;
+        uint8 leftBlackHeight; uint8 rightBlackHeight;
     }
 
     // destructive func
-    function joinLeft(Tree storage self, uint80 left, uint80 key, uint80 right, function (uint80) returns (bool) aggregate) internal returns (uint80) {
-        uint8 leftBlackHeight = self.nodes[left].blackHeight;
-        uint8 rightBlackHeight = self.nodes[right].blackHeight;
+    function joinRight(Tree storage self, JoinParams memory params,
+        function (uint80) returns (bool) aggregate
+    ) private returns (uint80, uint8) {
+        console.log("joinRight");
 
-        if (!self.nodes[right].red && leftBlackHeight == rightBlackHeight) {
-            _setRed(self, key, true);
-            self.nodes[key].left = left;
-            self.nodes[key].right = right;
-            _aggregateBlackHeight(self, key);
-            aggregate(key);
-            return key;
+        if (!self.nodes[params.left].red && params.leftBlackHeight == params.rightBlackHeight) {
+            self.nodes[params.key].red = true;
+            self.nodes[params.key].left = params.left;
+            self.nodes[params.key].right = params.right;
+            aggregate(params.key);
+            return (params.key, params.leftBlackHeight);
         }
 
-        uint80 t = joinLeft(self, left, key, self.nodes[right].left, aggregate);
-        self.nodes[right].left = t;
-        _aggregateBlackHeight(self, right);
-        aggregate(right);
+        (uint80 t, uint8 tBlackHeight) = joinRight(self, JoinParams({
+            left: self.nodes[params.left].right,
+            key: params.key,
+            right: params.right,
+            leftBlackHeight: params.leftBlackHeight - (self.nodes[params.left].red ? 0 : 1),
+            rightBlackHeight: params.rightBlackHeight
+        }), aggregate);
+        self.nodes[params.left].right = t;
+        aggregate(params.left);
 
-        if (!self.nodes[right].red && self.nodes[t].red && self.nodes[self.nodes[t].right].red) {
-            rotateRight(self, right, aggregate);
-            return self.nodes[right].parent;
+        if (!self.nodes[params.left].red && self.nodes[t].red && self.nodes[self.nodes[t].right].red) {
+            self.nodes[self.nodes[t].right].red = false;
+            rotateLeft(self, params.left, aggregate);
+            return (t, params.leftBlackHeight);
+//            return (self.nodes[params.left].parent, tBlackHeight + 1); // TODO: replace with t
         }
-        return right;
+        return (params.left, params.leftBlackHeight);
+//        return (params.left, tBlackHeight + (self.nodes[params.left].red ? 0 : 1));
     }
 
     // destructive func
-    function join(Tree storage self, uint80 left, uint80 key, uint80 right, function (uint80) returns (bool) aggregate) private returns (uint80) {
-        uint8 leftBlackHeight = self.nodes[left].blackHeight;
-        uint8 rightBlackHeight = self.nodes[right].blackHeight;
+    function joinLeft(Tree storage self, JoinParams memory params,
+        function (uint80) returns (bool) aggregate
+    )
+    internal returns (uint80, uint8) {
+        console.log("joinLeft left %s key %s right %s",
+            uint256(params.left), uint256(params.key), uint256(params.right));
+        console.log("  leftBlackHeight %s rightBlackHeight %s",
+            uint256(params.leftBlackHeight), uint256(params.rightBlackHeight));
 
+        if (!self.nodes[params.right].red && params.leftBlackHeight == params.rightBlackHeight) {
+            self.nodes[params.key].red = true;
+            self.nodes[params.key].left = params.left;
+            self.nodes[params.key].right = params.right;
+            aggregate(params.key);
+            return (params.key, params.leftBlackHeight);
+        }
+
+        (uint80 t, uint8 tBlackHeight) = joinLeft(self, JoinParams({
+        left: params.left,
+        key: params.key,
+        right: self.nodes[params.right].left,
+        leftBlackHeight: params.leftBlackHeight,
+        rightBlackHeight: params.rightBlackHeight - (self.nodes[params.right].red ? 0 : 1)
+        }), aggregate);
+        self.nodes[params.right].left = t;
+        aggregate(params.right);
+
+        if (!self.nodes[params.right].red && self.nodes[t].red && self.nodes[self.nodes[t].left].red) {
+            self.nodes[self.nodes[t].left].red = false;
+            rotateRight(self, params.right, aggregate);
+            return (t, params.rightBlackHeight);
+//            return (self.nodes[params.right].parent, tBlackHeight + 1); // TODO: replace with t
+        }
+        return (params.right, params.rightBlackHeight);
+//        return (params.right, tBlackHeight + (self.nodes[params.right].red ? 0 : 1));
+    }
+
+    // destructive func
+    function join(Tree storage self, uint80 left, uint80 key, uint80 right, function (uint80) returns (bool) aggregate,
+        uint8 leftBlackHeight, uint8 rightBlackHeight
+) private returns (uint80 t, uint8 tBlackHeight) {
+        console.log("join");
         if (leftBlackHeight > rightBlackHeight) {
-            uint80 t = joinRight(self, left, key, right, aggregate);
+            (t, tBlackHeight) = joinRight(self, JoinParams({
+            left: left,
+            key: key,
+            right: right,
+            leftBlackHeight: leftBlackHeight,
+            rightBlackHeight: rightBlackHeight
+            }), aggregate);
             if (self.nodes[t].red && self.nodes[self.nodes[t].right].red) {
-                _setRed(self, t, false);
+                self.nodes[t].red = false;
+                tBlackHeight += 1;
             }
-            return t;
         } else if (leftBlackHeight < rightBlackHeight) {
-            uint80 t = joinLeft(self, left, key, right, aggregate);
+            (t, tBlackHeight) = joinLeft(self, JoinParams({
+            left: left,
+            key: key,
+            right: right,
+            leftBlackHeight: leftBlackHeight,
+            rightBlackHeight: rightBlackHeight
+            }), aggregate);
             if (self.nodes[t].red && self.nodes[self.nodes[t].left].red) {
-                _setRed(self, t, false);
+                self.nodes[t].red = false;
+                tBlackHeight += 1;
             }
-            return t;
         } else {
-            _setRed(self, key, !self.nodes[left].red && !self.nodes[right].red);
+            bool red = !self.nodes[left].red && !self.nodes[right].red;
+            self.nodes[key].red = red;
             self.nodes[key].left = left;
             self.nodes[key].right = right;
-            _aggregateBlackHeight(self, key);
             aggregate(key);
-            return key;
+            (t, tBlackHeight) = (key, leftBlackHeight + (red ? 0 : 1));
         }
     }
 
     // destructive func
-    function splitRight(Tree storage self, uint80 t, uint80 key, function (uint80, uint80) returns (bool) lessThan, function (uint80) returns (bool) aggregate)
-    private returns (uint80 rightKey, uint8 blackHeight) {
-        if (t == EMPTY) return EMPTY;
+    function splitRight(Tree storage self, uint80 t, uint80 key,
+        function (uint80, uint80) returns (bool) lessThan,
+        function (uint80) returns (bool) aggregate,
+        uint8 blackHeight)
+    private returns (uint80, uint8) {
+        console.log("splitRight");
+        if (t == EMPTY) return (EMPTY, blackHeight); // TODO: correct?
+        uint8 childBlackHeight = blackHeight - (self.nodes[t].red ? 0 : 1);
+        console.log("splitRight 2");
+        if (key == t) return (self.nodes[t].right, childBlackHeight);
         if (lessThan(key, t)) {
-            uint80 r = splitRight(self, self.nodes[t].left, key, lessThan, aggregate);
-            rightKey = join(self, r, t, self.nodes[t].right, aggregate);
+            console.log("splitRight 3");
+            (uint80 r, uint8 rBlackHeight) = splitRight(
+                self, self.nodes[t].left, key, lessThan, aggregate,
+                childBlackHeight);
+//            if (r == EMPTY) {
+//                return (self.nodes[t].right, childBlackHeight);
+//            }
+            return join(self, r, t, self.nodes[t].right, aggregate,
+                rBlackHeight, childBlackHeight);
         } else {
-            (rightKey, blackHeight) = splitRight(self, self.nodes[t].right, key, lessThan, aggregate);
+            console.log("splitRight 4");
+            // wikipedia is wrong
+//            return (self.nodes[t].right, childBlackHeight);
+            // https://arxiv.org/pdf/1602.02120.pdf
+            return splitRight(self, self.nodes[t].right, key, lessThan, aggregate,
+                childBlackHeight);
         }
     }
 
     function removeLeft(Tree storage self, uint80 key, function (uint80, uint80) returns (bool) lessThan, function (uint80) returns (bool) aggregate) internal {
-        self.root = splitRight(self, self.root, key, lessThan, aggregate);
+        (self.root, ) = splitRight(self, self.root, key, lessThan, aggregate, 128);
     }
 
     function _aggregateRecursive(Tree storage self, uint80 key, function (uint80) returns (bool) aggregate) private {
         bool stopped;
-        bool stoppedBlackHeight;
         while (key != EMPTY) {
-//            if (!stoppedBlackHeight) {
-                stoppedBlackHeight = _aggregateBlackHeight(self, key);
-//            }
             if (!stopped) {
                 stopped = aggregate(key);
             }
@@ -290,9 +342,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
         self.nodes[cursor].left = key;
         self.nodes[key].parent = cursor;
-        _aggregateBlackHeight(self, key);
         aggregate(key);
-        _aggregateBlackHeight(self, cursor);
         aggregate(cursor);
     }
     function rotateRight(Tree storage self, uint80 key, function (uint80) returns (bool) aggregate) private {
@@ -313,9 +363,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
         self.nodes[cursor].right = key;
         self.nodes[key].parent = cursor;
-        _aggregateBlackHeight(self, key);
         aggregate(key);
-        _aggregateBlackHeight(self, cursor);
         aggregate(cursor);
     }
 
@@ -326,9 +374,9 @@ library BokkyPooBahsRedBlackTreeLibrary {
             if (keyParent == self.nodes[self.nodes[keyParent].parent].left) {
                 cursor = self.nodes[self.nodes[keyParent].parent].right;
                 if (self.nodes[cursor].red) {
-                    _setRed(self, keyParent, false);
-                    _setRed(self, cursor, false);
-                    _setRed(self, self.nodes[keyParent].parent, true);
+                    self.nodes[keyParent].red = false;
+                    self.nodes[cursor].red = false;
+                    self.nodes[self.nodes[keyParent].parent].red = true;
                     key = self.nodes[keyParent].parent;
                 } else {
                     if (key == self.nodes[keyParent].right) {
@@ -336,16 +384,16 @@ library BokkyPooBahsRedBlackTreeLibrary {
                       rotateLeft(self, key, aggregate);
                     }
                     keyParent = self.nodes[key].parent;
-                    _setRed(self, keyParent, false);
-                    _setRed(self, self.nodes[keyParent].parent, true);
+                    self.nodes[keyParent].red = false;
+                    self.nodes[self.nodes[keyParent].parent].red = true;
                     rotateRight(self, self.nodes[keyParent].parent, aggregate);
                 }
             } else {
                 cursor = self.nodes[self.nodes[keyParent].parent].left;
                 if (self.nodes[cursor].red) {
-                    _setRed(self, keyParent, false);
-                    _setRed(self, cursor, false);
-                    _setRed(self, self.nodes[keyParent].parent, true);
+                    self.nodes[keyParent].red = false;
+                    self.nodes[cursor].red = false;
+                    self.nodes[self.nodes[keyParent].parent].red = true;
                     key = self.nodes[keyParent].parent;
                 } else {
                     if (key == self.nodes[keyParent].left) {
@@ -353,13 +401,13 @@ library BokkyPooBahsRedBlackTreeLibrary {
                       rotateRight(self, key, aggregate);
                     }
                     keyParent = self.nodes[key].parent;
-                    _setRed(self, keyParent, false);
-                    _setRed(self, self.nodes[keyParent].parent, true);
+                    self.nodes[keyParent].red = false;
+                    self.nodes[self.nodes[keyParent].parent].red = true;
                     rotateLeft(self, self.nodes[keyParent].parent, aggregate);
                 }
             }
         }
-        _setRed(self, self.root, false);
+        self.nodes[self.root].red = false;
     }
 
     function replaceParent(Tree storage self, uint80 a, uint80 b) private {
@@ -382,79 +430,54 @@ library BokkyPooBahsRedBlackTreeLibrary {
             if (key == self.nodes[keyParent].left) {
                 cursor = self.nodes[keyParent].right;
                 if (self.nodes[cursor].red) {
-                    _setRed(self, cursor, false);
-                    _setRed(self, keyParent, true);
+                    self.nodes[cursor].red = false;
+                    self.nodes[keyParent].red = true;
                     rotateLeft(self, keyParent, aggregate);
                     cursor = self.nodes[keyParent].right;
                 }
                 if (!self.nodes[self.nodes[cursor].left].red && !self.nodes[self.nodes[cursor].right].red) {
-                    _setRed(self, cursor, true);
+                    self.nodes[cursor].red = true;
                     key = keyParent;
                 } else {
                     if (!self.nodes[self.nodes[cursor].right].red) {
-                        _setRed(self, self.nodes[cursor].left, false);
-                        _setRed(self, cursor, true);
+                        self.nodes[self.nodes[cursor].left].red = false;
+                        self.nodes[cursor].red = true;
                         rotateRight(self, cursor, aggregate);
                         cursor = self.nodes[keyParent].right;
                     }
-                    _setRed(self, cursor, self.nodes[keyParent].red);
-                    _setRed(self, keyParent, false);
-                    _setRed(self, self.nodes[cursor].right, false);
+                    self.nodes[cursor].red = self.nodes[keyParent].red;
+                    self.nodes[keyParent].red = false;
+                    self.nodes[self.nodes[cursor].right].red = false;
                     rotateLeft(self, keyParent, aggregate);
                     key = self.root;
                 }
             } else {
                 cursor = self.nodes[keyParent].left;
                 if (self.nodes[cursor].red) {
-                    _setRed(self, cursor, false);
-                    _setRed(self, keyParent, true);
+                    self.nodes[cursor].red = false;
+                    self.nodes[keyParent].red = true;
                     rotateRight(self, keyParent, aggregate);
                     cursor = self.nodes[keyParent].left;
                 }
                 if (!self.nodes[self.nodes[cursor].right].red && !self.nodes[self.nodes[cursor].left].red) {
-                    _setRed(self, cursor, true);
+                    self.nodes[cursor].red = true;
                     key = keyParent;
                 } else {
                     if (!self.nodes[self.nodes[cursor].left].red) {
-                        _setRed(self, self.nodes[cursor].right, false);
-                        _setRed(self, cursor, true);
+                        self.nodes[self.nodes[cursor].right].red = false;
+                        self.nodes[cursor].red = true;
                         rotateLeft(self, cursor, aggregate);
                         cursor = self.nodes[keyParent].left;
                     }
-                    _setRed(self, cursor, self.nodes[keyParent].red);
-                    _setRed(self, keyParent, false);
-                    _setRed(self, self.nodes[cursor].left, false);
+                    self.nodes[cursor].red = self.nodes[keyParent].red;
+                    self.nodes[keyParent].red = false;
+                    self.nodes[self.nodes[cursor].left].red = false;
                     rotateRight(self, keyParent, aggregate);
                     key = self.root;
                 }
             }
         }
-        _setRed(self, key, false);
-    }
-
-    function _setRed(Tree storage self, uint80 key, bool red) private {
-        if (self.nodes[key].red != red) {
-            self.nodes[key].red = red;
-            self.nodes[key].blackHeight = red ?
-                self.nodes[key].blackHeight - 1 :
-                self.nodes[key].blackHeight + 1;
-        }
-    }
-
-    function _aggregateBlackHeight(Tree storage self, uint80 key) private returns (bool) {
-        Node memory node = self.nodes[key];
-        uint8 blackHeight = (
-        (node.left == EMPTY || node.right == EMPTY) ?
-        1
-        :
-        self.nodes[node.left].blackHeight)
-        + (node.red ? 0 : 1);
-        if (node.blackHeight == blackHeight) {
-            return true;
-        } else {
-            self.nodes[key].blackHeight = blackHeight;
-            return false;
-        }
+        self.nodes[key].red = false;
     }
 }
 // ----------------------------------------------------------------------------

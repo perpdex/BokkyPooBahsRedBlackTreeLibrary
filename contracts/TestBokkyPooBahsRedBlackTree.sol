@@ -44,7 +44,7 @@ contract TestBokkyPooBahsRedBlackTree {
     }
     function getNode(uint80 _key) public view returns (uint80 key, uint80 parent, uint80 left, uint80 right, bool red, uint value) {
         if (tree.exists(_key)) {
-            (key, parent, left, right, red, ) = tree.getNode(_key);
+            (key, parent, left, right, red) = tree.getNode(_key);
             value = values[_key];
         }
     }
