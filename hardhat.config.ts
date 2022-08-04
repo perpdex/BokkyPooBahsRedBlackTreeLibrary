@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-chai-matchers"
 import "@typechain/hardhat"
 import "solidity-coverage"
 import "hardhat-deploy"
+import "hardhat-gas-reporter"
 import { HardhatUserConfig } from "hardhat/config"
 import { resolve } from "path"
 import { config as dotenvConfig } from "dotenv"
@@ -25,6 +26,8 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {
             allowUnlimitedContractSize: true,
+            // gas: 299021464,
+            // blockGasLimit: 299021464,
         },
     },
     typechain: {
