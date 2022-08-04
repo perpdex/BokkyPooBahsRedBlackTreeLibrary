@@ -18,58 +18,58 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
-    mapping(uint80 => uint256) public sums;
+    mapping(uint40 => uint256) public sums;
 
-    event Log(string where, uint80 key, uint256 value);
+    event Log(string where, uint40 key, uint256 value);
 
     constructor() public {}
 
-    function root() public view returns (uint80 _key) {
+    function root() public view returns (uint40 _key) {
         _key = tree.root;
     }
 
-    function first() public view returns (uint80 _key) {
+    function first() public view returns (uint40 _key) {
         _key = tree.first();
     }
 
-    function last() public view returns (uint80 _key) {
+    function last() public view returns (uint40 _key) {
         _key = tree.last();
     }
 
-    function next(uint80 key) public view returns (uint80 _key) {
+    function next(uint40 key) public view returns (uint40 _key) {
         _key = tree.next(key);
     }
 
-    function prev(uint80 key) public view returns (uint80 _key) {
+    function prev(uint40 key) public view returns (uint40 _key) {
         _key = tree.prev(key);
     }
 
-    function exists(uint80 key) public view returns (bool _exists) {
+    function exists(uint40 key) public view returns (bool _exists) {
         _exists = tree.exists(key);
     }
 
-    function getNode(uint80 _key)
+    function getNode(uint40 _key)
         public
         view
         returns (
-            uint80 key,
-            uint80 parent,
-            uint80 left,
-            uint80 right,
+            uint40 key,
+            uint40 parent,
+            uint40 left,
+            uint40 right,
             bool red
         )
     {
         (key, parent, left, right, red) = tree.getNode(_key);
     }
 
-    function getNodeUnsafe(uint80 _key)
+    function getNodeUnsafe(uint40 _key)
         public
         view
         returns (
-            uint80 key,
-            uint80 parent,
-            uint80 left,
-            uint80 right,
+            uint40 key,
+            uint40 parent,
+            uint40 left,
+            uint40 right,
             bool red
         )
     {
@@ -83,31 +83,31 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         );
     }
 
-    function insert(uint80 _key) public {
+    function insert(uint40 _key) public {
         tree.insert(_key, lessThan, aggregate);
         // emit Log("insert", _key, 0);
     }
 
-    function insertBulk(uint80[] memory _keys) public {
+    function insertBulk(uint40[] memory _keys) public {
         for (uint256 i = 0; i < _keys.length; i++) {
             insert(_keys[i]);
         }
     }
 
-    function remove(uint80 _key) public {
+    function remove(uint40 _key) public {
         tree.remove(_key, aggregate);
         // emit Log("remove", _key, 0);
     }
 
-    function removeLeft(uint80 _key) public {
+    function removeLeft(uint40 _key) public {
         tree.removeLeft(_key, lessThan, aggregate);
     }
 
-    function lessThan(uint80 key0, uint80 key1) private pure returns (bool) {
+    function lessThan(uint40 key0, uint40 key1) private pure returns (bool) {
         return key0 < key1;
     }
 
-    function aggregate(uint80 key) private returns (bool stop) {
+    function aggregate(uint40 key) private returns (bool stop) {
         uint256 prev = sums[key];
         sums[key] =
             sums[tree.nodes[key].left] +

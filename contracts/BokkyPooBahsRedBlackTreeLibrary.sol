@@ -19,38 +19,38 @@ library BokkyPooBahsRedBlackTreeLibrary {
     struct Node {
         // TODO: id reuse (not improve security? improve gas)
         // TODO: id 40bit (too small?)
-        uint80 parent;
-        uint80 left;
-        uint80 right;
-        // TODO: user defined field
+        uint40 parent;
+        uint40 left;
+        uint40 right;
         bool red;
+        uint128 userData; // use freely. this is for gas efficiency
     }
 
     struct Tree {
-        uint80 root;
-        mapping(uint80 => Node) nodes;
+        uint40 root;
+        mapping(uint40 => Node) nodes;
     }
 
-    uint80 private constant EMPTY = 0;
+    uint40 private constant EMPTY = 0;
 
-    function first(Tree storage self) internal view returns (uint80 _key) {
+    function first(Tree storage self) internal view returns (uint40 _key) {
         _key = self.root;
         if (_key != EMPTY) {
             _key = treeMinimum(self, self.root);
         }
     }
 
-    function last(Tree storage self) internal view returns (uint80 _key) {
+    function last(Tree storage self) internal view returns (uint40 _key) {
         _key = self.root;
         if (_key != EMPTY) {
             _key = treeMaximum(self, self.root);
         }
     }
 
-    function next(Tree storage self, uint80 target)
+    function next(Tree storage self, uint40 target)
         internal
         view
-        returns (uint80 cursor)
+        returns (uint40 cursor)
     {
         require(target != EMPTY, "RBTL_N: target is empty");
         if (self.nodes[target].right != EMPTY) {
@@ -64,10 +64,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
-    function prev(Tree storage self, uint80 target)
+    function prev(Tree storage self, uint40 target)
         internal
         view
-        returns (uint80 cursor)
+        returns (uint40 cursor)
     {
         require(target != EMPTY, "RBTL_P: target is empty");
         if (self.nodes[target].left != EMPTY) {
@@ -81,7 +81,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
-    function exists(Tree storage self, uint80 key)
+    function exists(Tree storage self, uint40 key)
         internal
         view
         returns (bool)
@@ -91,7 +91,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             ((key == self.root) || (self.nodes[key].parent != EMPTY));
     }
 
-    function isEmpty(uint80 key) internal pure returns (bool) {
+    function isEmpty(uint40 key) internal pure returns (bool) {
         return key == EMPTY;
     }
 
@@ -99,14 +99,14 @@ library BokkyPooBahsRedBlackTreeLibrary {
         return EMPTY;
     }
 
-    function getNode(Tree storage self, uint80 key)
+    function getNode(Tree storage self, uint40 key)
         internal
         view
         returns (
-            uint80 _returnKey,
-            uint80 _parent,
-            uint80 _left,
-            uint80 _right,
+            uint40 _returnKey,
+            uint40 _parent,
+            uint40 _left,
+            uint40 _right,
             bool _red
         )
     {
@@ -122,14 +122,14 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function insert(
         Tree storage self,
-        uint80 key,
-        function(uint80, uint80) view returns (bool) lessThan,
-        function(uint80) returns (bool) aggregate
+        uint40 key,
+        function(uint40, uint40) view returns (bool) lessThan,
+        function(uint40) returns (bool) aggregate
     ) internal {
         require(key != EMPTY, "RBTL_I: key is empty");
         require(!exists(self, key), "RBTL_I: key already exists");
-        uint80 cursor = EMPTY;
-        uint80 probe = self.root;
+        uint40 cursor = EMPTY;
+        uint40 probe = self.root;
         while (probe != EMPTY) {
             cursor = probe;
             if (lessThan(key, probe)) {
@@ -142,7 +142,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
             parent: cursor,
             left: EMPTY,
             right: EMPTY,
-            red: true
+            red: true,
+            userData: 0
         });
         if (cursor == EMPTY) {
             self.root = key;
@@ -157,13 +158,13 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function remove(
         Tree storage self,
-        uint80 key,
-        function(uint80) returns (bool) aggregate
+        uint40 key,
+        function(uint40) returns (bool) aggregate
     ) internal {
         require(key != EMPTY, "RBTL_R: key is empty");
         require(exists(self, key), "RBTL_R: key not exist");
-        uint80 probe;
-        uint80 cursor;
+        uint40 probe;
+        uint40 cursor;
         if (self.nodes[key].left == EMPTY || self.nodes[key].right == EMPTY) {
             cursor = key;
         } else {
@@ -177,7 +178,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         } else {
             probe = self.nodes[cursor].right;
         }
-        uint80 yParent = self.nodes[cursor].parent;
+        uint40 yParent = self.nodes[cursor].parent;
         self.nodes[probe].parent = yParent;
         if (yParent != EMPTY) {
             if (cursor == self.nodes[yParent].left) {
@@ -217,9 +218,9 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     // to avoid stack too deep
     struct JoinParams {
-        uint80 left;
-        uint80 key;
-        uint80 right;
+        uint40 left;
+        uint40 key;
+        uint40 right;
         uint8 leftBlackHeight;
         uint8 rightBlackHeight;
     }
@@ -228,8 +229,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
     function joinRight(
         Tree storage self,
         JoinParams memory params,
-        function(uint80) returns (bool) aggregate
-    ) private returns (uint80, uint8) {
+        function(uint40) returns (bool) aggregate
+    ) private returns (uint40, uint8) {
         console.log("joinRight");
 
         if (
@@ -243,7 +244,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             return (params.key, params.leftBlackHeight);
         }
 
-        (uint80 t, uint8 tBlackHeight) = joinRight(
+        (uint40 t, uint8 tBlackHeight) = joinRight(
             self,
             JoinParams({
                 left: self.nodes[params.left].right,
@@ -274,15 +275,15 @@ library BokkyPooBahsRedBlackTreeLibrary {
     }
 
     struct JoinLeftCallStack {
-        uint80 right;
+        uint40 right;
     }
 
     // destructive func
     function joinLeft(
         Tree storage self,
         JoinParams memory params,
-        function(uint80) returns (bool) aggregate
-    ) internal returns (uint80 resultKey) {
+        function(uint40) returns (bool) aggregate
+    ) internal returns (uint40 resultKey) {
         //        console.log("joinLeft left %s key %s right %s",
         //            uint256(params.left), uint256(params.key), uint256(params.right));
         //        console.log("  leftBlackHeight %s rightBlackHeight %s",
@@ -305,7 +306,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             return params.key;
         }
 
-        uint80 t = joinLeft(
+        uint40 t = joinLeft(
             self,
             JoinParams({
                 left: params.left,
@@ -339,13 +340,13 @@ library BokkyPooBahsRedBlackTreeLibrary {
     // destructive func
     function join(
         Tree storage self,
-        uint80 left,
-        uint80 key,
-        uint80 right,
-        function(uint80) returns (bool) aggregate,
+        uint40 left,
+        uint40 key,
+        uint40 right,
+        function(uint40) returns (bool) aggregate,
         uint8 leftBlackHeight,
         uint8 rightBlackHeight
-    ) private returns (uint80 t, uint8 tBlackHeight) {
+    ) private returns (uint40 t, uint8 tBlackHeight) {
         //        console.log("join left %s key %s right %s",
         //            left, key, right);
         if (leftBlackHeight > rightBlackHeight) {
@@ -393,19 +394,19 @@ library BokkyPooBahsRedBlackTreeLibrary {
     }
 
     struct SplitRightCallStack {
-        uint80 t;
+        uint40 t;
         uint8 childBlackHeight;
     }
 
     // destructive func
     function splitRight(
         Tree storage self,
-        uint80 t,
-        uint80 key,
-        function(uint80, uint80) returns (bool) lessThan,
-        function(uint80) returns (bool) aggregate,
+        uint40 t,
+        uint40 key,
+        function(uint40, uint40) returns (bool) lessThan,
+        function(uint40) returns (bool) aggregate,
         uint8 blackHeight
-    ) private returns (uint80 resultKey, uint8 resultBlackHeight) {
+    ) private returns (uint40 resultKey, uint8 resultBlackHeight) {
         //        console.log("splitRight");
         if (t == EMPTY) return (EMPTY, blackHeight);
         uint8 childBlackHeight = blackHeight - (self.nodes[t].red ? 0 : 1);
@@ -413,7 +414,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         if (key == t) return (self.nodes[t].right, childBlackHeight);
         if (lessThan(key, t)) {
             //            console.log("splitRight 3");
-            (uint80 r, uint8 rBlackHeight) = splitRight(
+            (uint40 r, uint8 rBlackHeight) = splitRight(
                 self,
                 self.nodes[t].left,
                 key,
@@ -453,9 +454,9 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function removeLeft(
         Tree storage self,
-        uint80 key,
-        function(uint80, uint80) returns (bool) lessThan,
-        function(uint80) returns (bool) aggregate
+        uint40 key,
+        function(uint40, uint40) returns (bool) lessThan,
+        function(uint40) returns (bool) aggregate
     ) internal {
         (self.root, ) = splitRight(
             self,
@@ -469,8 +470,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function _aggregateRecursive(
         Tree storage self,
-        uint80 key,
-        function(uint80) returns (bool) aggregate
+        uint40 key,
+        function(uint40) returns (bool) aggregate
     ) private {
         bool stopped;
         while (key != EMPTY) {
@@ -482,10 +483,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
-    function treeMinimum(Tree storage self, uint80 key)
+    function treeMinimum(Tree storage self, uint40 key)
         private
         view
-        returns (uint80)
+        returns (uint40)
     {
         while (self.nodes[key].left != EMPTY) {
             key = self.nodes[key].left;
@@ -493,10 +494,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         return key;
     }
 
-    function treeMaximum(Tree storage self, uint80 key)
+    function treeMaximum(Tree storage self, uint40 key)
         private
         view
-        returns (uint80)
+        returns (uint40)
     {
         while (self.nodes[key].right != EMPTY) {
             key = self.nodes[key].right;
@@ -506,12 +507,12 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function rotateLeft(
         Tree storage self,
-        uint80 key,
-        function(uint80) returns (bool) aggregate
+        uint40 key,
+        function(uint40) returns (bool) aggregate
     ) private {
-        uint80 cursor = self.nodes[key].right;
-        uint80 keyParent = self.nodes[key].parent;
-        uint80 cursorLeft = self.nodes[cursor].left;
+        uint40 cursor = self.nodes[key].right;
+        uint40 keyParent = self.nodes[key].parent;
+        uint40 cursorLeft = self.nodes[cursor].left;
         self.nodes[key].right = cursorLeft;
         if (cursorLeft != EMPTY) {
             self.nodes[cursorLeft].parent = key;
@@ -532,12 +533,12 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function rotateRight(
         Tree storage self,
-        uint80 key,
-        function(uint80) returns (bool) aggregate
+        uint40 key,
+        function(uint40) returns (bool) aggregate
     ) private {
-        uint80 cursor = self.nodes[key].left;
-        uint80 keyParent = self.nodes[key].parent;
-        uint80 cursorRight = self.nodes[cursor].right;
+        uint40 cursor = self.nodes[key].left;
+        uint40 keyParent = self.nodes[key].parent;
+        uint40 cursorRight = self.nodes[cursor].right;
         self.nodes[key].left = cursorRight;
         if (cursorRight != EMPTY) {
             self.nodes[cursorRight].parent = key;
@@ -558,12 +559,12 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function insertFixup(
         Tree storage self,
-        uint80 key,
-        function(uint80) returns (bool) aggregate
+        uint40 key,
+        function(uint40) returns (bool) aggregate
     ) private {
-        uint80 cursor;
+        uint40 cursor;
         while (key != self.root && self.nodes[self.nodes[key].parent].red) {
-            uint80 keyParent = self.nodes[key].parent;
+            uint40 keyParent = self.nodes[key].parent;
             if (keyParent == self.nodes[self.nodes[keyParent].parent].left) {
                 cursor = self.nodes[self.nodes[keyParent].parent].right;
                 if (self.nodes[cursor].red) {
@@ -605,10 +606,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function replaceParent(
         Tree storage self,
-        uint80 a,
-        uint80 b
+        uint40 a,
+        uint40 b
     ) private {
-        uint80 bParent = self.nodes[b].parent;
+        uint40 bParent = self.nodes[b].parent;
         self.nodes[a].parent = bParent;
         if (bParent == EMPTY) {
             self.root = a;
@@ -623,12 +624,12 @@ library BokkyPooBahsRedBlackTreeLibrary {
 
     function removeFixup(
         Tree storage self,
-        uint80 key,
-        function(uint80) returns (bool) aggregate
+        uint40 key,
+        function(uint40) returns (bool) aggregate
     ) private {
-        uint80 cursor;
+        uint40 cursor;
         while (key != self.root && !self.nodes[key].red) {
-            uint80 keyParent = self.nodes[key].parent;
+            uint40 keyParent = self.nodes[key].parent;
             if (key == self.nodes[keyParent].left) {
                 cursor = self.nodes[keyParent].right;
                 if (self.nodes[cursor].red) {
