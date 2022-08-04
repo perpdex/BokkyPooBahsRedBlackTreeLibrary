@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { waffle } from "hardhat";
 import { TestBokkyPooBahsRedBlackTreeRaw } from "../typechain";
 import { createFixture } from "./fixtures";
+import { checkConsistency, getKeys } from "./helper";
 
 describe("insert", () => {
   let loadFixture = waffle.createFixtureLoader(waffle.provider.getWallets());
@@ -17,7 +18,8 @@ describe("insert", () => {
   describe("one", () => {
     it("ok", async () => {
       await tree.insert(1);
-      expect(await tree.first()).to.eq(1);
+      expect(await getKeys(tree)).to.deep.eq([1]);
+      await checkConsistency(tree);
     });
   });
 
@@ -25,8 +27,8 @@ describe("insert", () => {
     it("ok", async () => {
       await tree.insert(2);
       await tree.insert(1);
-      expect(await tree.first()).to.eq(1);
-      expect(await tree.last()).to.eq(2);
+      expect(await getKeys(tree)).to.deep.eq([1, 2]);
+      await checkConsistency(tree);
     });
   });
 });

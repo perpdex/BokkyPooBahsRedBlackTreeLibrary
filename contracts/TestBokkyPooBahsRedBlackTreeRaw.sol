@@ -66,6 +66,12 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         // emit Log("insert", _key, 0);
     }
 
+    function insertBulk(uint80[] memory _keys) public {
+        for (uint256 i = 0; i < _keys.length; i++) {
+            insert(_keys[i]);
+        }
+    }
+
     function remove(uint80 _key) public {
         tree.remove(_key, aggregate);
         // emit Log("remove", _key, 0);
