@@ -1,0 +1,32 @@
+name: Testing
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ${{ steps.npm-cache.outputs.dir }}
+            **/node_modules
+          key: ${{ github.job }}-${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ github.job }}-${{ runner.os }}-node-
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - run: yarn install
+      - run: yarn build
+      - run: npx hardhat test
