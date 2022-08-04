@@ -458,6 +458,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
         function(uint40, uint40) returns (bool) lessThan,
         function(uint40) returns (bool) aggregate
     ) internal {
+        require(key != EMPTY, "RBTL_RL: key is empty");
+        require(exists(self, key), "RBTL_RL: key not exist");
         (self.root, ) = splitRight(
             self,
             self.root,
