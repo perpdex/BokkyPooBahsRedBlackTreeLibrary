@@ -4,7 +4,7 @@
   "rules": {
     "prettier/prettier": "error",
     "max-line-length": "error",
-    "compiler-version": ["error", "^0.7.6"],
+    "compiler-version": ["error", "^0.8.0"],
     "ordering": "warn",
     "reason-string": ["error", { "maxLength": 32 }],
     "func-name-mixedcase": "off",

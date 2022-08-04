@@ -18,42 +18,60 @@ contract TestBokkyPooBahsRedBlackTree {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
-    mapping(uint80 => uint) values;
+    mapping(uint80 => uint256) values;
 
-    event Log(string where, uint80 key, uint value);
+    event Log(string where, uint80 key, uint256 value);
 
-    constructor() public {
-    }
+    constructor() public {}
+
     function root() public view returns (uint80 _key) {
         _key = tree.root;
     }
+
     function first() public view returns (uint80 _key) {
         _key = tree.first();
     }
+
     function last() public view returns (uint80 _key) {
         _key = tree.last();
     }
+
     function next(uint80 key) public view returns (uint80 _key) {
         _key = tree.next(key);
     }
+
     function prev(uint80 key) public view returns (uint80 _key) {
         _key = tree.prev(key);
     }
+
     function exists(uint80 key) public view returns (bool _exists) {
         _exists = tree.exists(key);
     }
-    function getNode(uint80 _key) public view returns (uint80 key, uint80 parent, uint80 left, uint80 right, bool red, uint value) {
+
+    function getNode(uint80 _key)
+        public
+        view
+        returns (
+            uint80 key,
+            uint80 parent,
+            uint80 left,
+            uint80 right,
+            bool red,
+            uint256 value
+        )
+    {
         if (tree.exists(_key)) {
             (key, parent, left, right, red) = tree.getNode(_key);
             value = values[_key];
         }
     }
 
-    function insert(uint80 _key, uint _value) public {
+    function insert(uint80 _key, uint256 _value) public {
         tree.insert(_key, lessThan, aggregate);
         values[_key] = _value;
         emit Log("insert", _key, _value);
     }
+
     function remove(uint80 _key) public {
         tree.remove(_key, aggregate);
         emit Log("remove", _key, values[_key]);

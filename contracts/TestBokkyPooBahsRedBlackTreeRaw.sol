@@ -19,29 +19,45 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
 
-    event Log(string where, uint80 key, uint value);
+    event Log(string where, uint80 key, uint256 value);
 
-    constructor() public {
-    }
+    constructor() public {}
+
     function root() public view returns (uint80 _key) {
         _key = tree.root;
     }
+
     function first() public view returns (uint80 _key) {
         _key = tree.first();
     }
+
     function last() public view returns (uint80 _key) {
         _key = tree.last();
     }
+
     function next(uint80 key) public view returns (uint80 _key) {
         _key = tree.next(key);
     }
+
     function prev(uint80 key) public view returns (uint80 _key) {
         _key = tree.prev(key);
     }
+
     function exists(uint80 key) public view returns (bool _exists) {
         _exists = tree.exists(key);
     }
-    function getNode(uint80 _key) public view returns (uint80 key, uint80 parent, uint80 left, uint80 right, bool red) {
+
+    function getNode(uint80 _key)
+        public
+        view
+        returns (
+            uint80 key,
+            uint80 parent,
+            uint80 left,
+            uint80 right,
+            bool red
+        )
+    {
         (key, parent, left, right, red) = tree.getNode(_key);
     }
 
@@ -49,6 +65,7 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         tree.insert(_key, lessThan, aggregate);
         // emit Log("insert", _key, 0);
     }
+
     function remove(uint80 _key) public {
         tree.remove(_key, aggregate);
         // emit Log("remove", _key, 0);
