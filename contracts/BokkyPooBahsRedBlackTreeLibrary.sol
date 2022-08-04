@@ -15,9 +15,12 @@ import "hardhat/console.sol";
 library BokkyPooBahsRedBlackTreeLibrary {
 
     struct Node {
+        // TODO: id reuse (not improve security? improve gas)
+        // TODO: id 40bit (too small?)
         uint80 parent;
         uint80 left;
         uint80 right;
+        // TODO: user defined field
         bool red;
     }
 
