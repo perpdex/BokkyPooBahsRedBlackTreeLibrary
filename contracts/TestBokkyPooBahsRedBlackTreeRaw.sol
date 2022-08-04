@@ -61,6 +61,27 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         (key, parent, left, right, red) = tree.getNode(_key);
     }
 
+    function getNodeUnsafe(uint80 _key)
+        public
+        view
+        returns (
+            uint80 key,
+            uint80 parent,
+            uint80 left,
+            uint80 right,
+            bool red
+        )
+    {
+        BokkyPooBahsRedBlackTreeLibrary.Node memory node = tree.nodes[_key];
+        (key, parent, left, right, red) = (
+            key,
+            node.parent,
+            node.left,
+            node.right,
+            node.red
+        );
+    }
+
     function insert(uint80 _key) public {
         tree.insert(_key, lessThan, aggregate);
         // emit Log("insert", _key, 0);

@@ -4,7 +4,7 @@ import { TestBokkyPooBahsRedBlackTreeRaw } from "../typechain";
 import { createFixture } from "./fixtures";
 import { checkConsistency, getKeys } from "./helper";
 
-describe("insert", () => {
+describe("remove", () => {
   let loadFixture = waffle.createFixtureLoader(waffle.provider.getWallets());
   let fixture;
 
@@ -15,35 +15,34 @@ describe("insert", () => {
     tree = fixture.tree;
   });
 
-  describe("one", () => {
+  describe("remove all", () => {
     it("ok", async () => {
       await tree.insert(1);
-      expect(await getKeys(tree)).to.deep.eq([1]);
+      await tree.remove(1);
+      expect(await getKeys(tree)).to.deep.eq([]);
       await checkConsistency(tree);
     });
   });
 
-  describe("two", () => {
+  describe("one", () => {
     it("ok", async () => {
-      await tree.insert(2);
       await tree.insert(1);
-      expect(await getKeys(tree)).to.deep.eq([1, 2]);
+      await tree.insert(2);
+      await tree.remove(1);
+      expect(await getKeys(tree)).to.deep.eq([2]);
       await checkConsistency(tree);
     });
   });
 
   describe("empty", () => {
     it("revert", async () => {
-      await expect(tree.insert(0)).to.be.revertedWith("RBTL_I: key is empty");
+      await expect(tree.remove(0)).to.be.revertedWith("RBTL_R: key is empty");
     });
   });
 
-  describe("already exists", () => {
+  describe("not exist", () => {
     it("revert", async () => {
-      await tree.insert(1);
-      await expect(tree.insert(1)).to.be.revertedWith(
-        "RBTL_I: key already exists"
-      );
+      await expect(tree.remove(1)).to.be.revertedWith("RBTL_R: key not exist");
     });
   });
 });

@@ -31,12 +31,22 @@ const checkNode = async (tree, node) => {
 
 const checkRedBlackConditions = async (tree) => {
   const root = await tree.root();
-  await checkNode(tree, root);
+  if (!root.eq(0)) {
+    const rootNode = await tree.getNode(root);
+    expect(rootNode.parent).to.eq(0);
+    await checkNode(tree, root);
+  }
 };
 
 export const checkConsistency = async (tree) => {
   const keys = await getKeys(tree);
   expect(keys).to.deep.eq(_.sortBy(keys));
+
+  const emptyNode = await tree.getNodeUnsafe(0);
+  expect(emptyNode.parent).to.eq(0);
+  expect(emptyNode.left).to.eq(0);
+  expect(emptyNode.right).to.eq(0);
+  expect(emptyNode.red).to.eq(false);
 
   await checkRedBlackConditions(tree);
 };
