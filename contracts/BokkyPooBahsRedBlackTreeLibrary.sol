@@ -473,12 +473,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
         uint40 key,
         function(uint40) returns (bool) aggregate
     ) private {
-        bool stopped;
         while (key != EMPTY) {
-            if (!stopped) {
-                stopped = aggregate(key);
-            }
-            if (stopped) return;
+            if (aggregate(key)) return;
             key = self.nodes[key].parent;
         }
     }
