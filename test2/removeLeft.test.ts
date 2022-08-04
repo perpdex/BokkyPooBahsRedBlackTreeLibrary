@@ -25,4 +25,30 @@ describe("removeLeft", () => {
       await checkConsistency(tree);
     });
   });
+
+  describe("all", () => {
+    it("ok", async () => {
+      const keys = _.range(1, 100);
+      await tree.insertBulk(keys);
+      await tree.removeLeft(99);
+      expect(await getKeys(tree)).to.deep.eq([]);
+      await checkConsistency(tree);
+    });
+  });
+
+  describe("empty", () => {
+    it("revert", async () => {
+      await expect(tree.removeLeft(0)).to.be.revertedWith(
+        "RBTL_RL: key is empty"
+      );
+    });
+  });
+
+  describe("not exist", () => {
+    it("revert", async () => {
+      await expect(tree.removeLeft(1)).to.be.revertedWith(
+        "RBTL_RL: key not exist"
+      );
+    });
+  });
 });
