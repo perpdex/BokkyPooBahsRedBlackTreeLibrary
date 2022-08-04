@@ -295,44 +295,28 @@ library BokkyPooBahsRedBlackTreeLibrary {
         function (uint80) returns (bool) aggregate,
         uint8 blackHeight)
     private returns (uint80 resultKey, uint8 resultBlackHeight) {
-        SplitRightCallStack[80] memory stacks;
-        uint i;
-
-        while (true) {
-            if (t == EMPTY) {
-                resultKey = EMPTY;
-                resultBlackHeight = blackHeight;
-                break;
-            }
-            uint8 childBlackHeight = blackHeight - (self.nodes[t].red ? 0 : 1);
-            if (key == t) {
-                resultKey = self.nodes[t].right;
-                resultBlackHeight = childBlackHeight;
-                break;
-            }
-
-            blackHeight = childBlackHeight;
-            if (lessThan(key, t)) {
-                stacks[i] = SplitRightCallStack({
-                    t: t,
-                    childBlackHeight: childBlackHeight
-                });
-                t = self.nodes[t].left;
-            } else {
-                t = self.nodes[t].right;
-            }
-            i++;
-        }
-
-        while (true) {
-            SplitRightCallStack memory stack = stacks[i];
-            if (stack.t != EMPTY) {
-                (resultKey, resultBlackHeight) = join(
-                    self, resultKey, stack.t, self.nodes[stack.t].right, aggregate,
-                    resultBlackHeight, stack.childBlackHeight);
-            }
-            if (i == 0) break;
-            i--;
+//        console.log("splitRight");
+        if (t == EMPTY) return (EMPTY, blackHeight);
+        uint8 childBlackHeight = blackHeight - (self.nodes[t].red ? 0 : 1);
+//        console.log("splitRight 2");
+        if (key == t) return (self.nodes[t].right, childBlackHeight);
+        if (lessThan(key, t)) {
+//            console.log("splitRight 3");
+            (uint80 r, uint8 rBlackHeight) = splitRight(
+                self, self.nodes[t].left, key, lessThan, aggregate,
+                childBlackHeight);
+            //            if (r == EMPTY) {
+            //                return (self.nodes[t].right, childBlackHeight);
+            //            }
+            return join(self, r, t, self.nodes[t].right, aggregate,
+                rBlackHeight, childBlackHeight);
+        } else {
+//            console.log("splitRight 4");
+            // wikipedia is wrong
+            //            return (self.nodes[t].right, childBlackHeight);
+            // https://arxiv.org/pdf/1602.02120.pdf
+            return splitRight(self, self.nodes[t].right, key, lessThan, aggregate,
+                childBlackHeight);
         }
     }
 
