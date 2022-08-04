@@ -14,33 +14,34 @@ import "./BokkyPooBahsRedBlackTreeLibrary.sol";
 //
 // Enjoy. (c) BokkyPooBah / Bok Consulting Pty Ltd 2020. The MIT Licence.
 // ----------------------------------------------------------------------------
+
+// Unify the return value type to uint in order to always return a BigNumber.
 contract TestBokkyPooBahsRedBlackTreeRaw {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
-    mapping(uint40 => uint256) public sums;
 
     event Log(string where, uint40 key, uint256 value);
 
     constructor() public {}
 
-    function root() public view returns (uint40 _key) {
+    function root() public view returns (uint256 _key) {
         _key = tree.root;
     }
 
-    function first() public view returns (uint40 _key) {
+    function first() public view returns (uint256 _key) {
         _key = tree.first();
     }
 
-    function last() public view returns (uint40 _key) {
+    function last() public view returns (uint256 _key) {
         _key = tree.last();
     }
 
-    function next(uint40 key) public view returns (uint40 _key) {
+    function next(uint40 key) public view returns (uint256 _key) {
         _key = tree.next(key);
     }
 
-    function prev(uint40 key) public view returns (uint40 _key) {
+    function prev(uint40 key) public view returns (uint256 _key) {
         _key = tree.prev(key);
     }
 
@@ -52,10 +53,10 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         public
         view
         returns (
-            uint40 key,
-            uint40 parent,
-            uint40 left,
-            uint40 right,
+            uint256 key,
+            uint256 parent,
+            uint256 left,
+            uint256 right,
             bool red
         )
     {
@@ -66,10 +67,10 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         public
         view
         returns (
-            uint40 key,
-            uint40 parent,
-            uint40 left,
-            uint40 right,
+            uint256 key,
+            uint256 parent,
+            uint256 left,
+            uint256 right,
             bool red
         )
     {
@@ -108,11 +109,15 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     }
 
     function aggregate(uint40 key) private returns (bool stop) {
-        uint256 prev = sums[key];
-        sums[key] =
-            sums[tree.nodes[key].left] +
-            sums[tree.nodes[key].right] +
+        uint128 prevSum = tree.nodes[key].userData;
+        uint128 sum = tree.nodes[tree.nodes[key].left].userData +
+            tree.nodes[tree.nodes[key].right].userData +
             key;
-        stop = sums[key] == prev;
+        tree.nodes[key].userData = sum;
+        stop = sum == prevSum;
+    }
+
+    function sums(uint40 key) external view returns (uint256) {
+        return tree.nodes[key].userData;
     }
 }
