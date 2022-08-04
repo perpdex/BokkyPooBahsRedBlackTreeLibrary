@@ -250,6 +250,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             aggregate
         );
         self.nodes[params.left].right = t;
+        self.nodes[params.left].parent = EMPTY;
         aggregate(params.left);
 
         if (
