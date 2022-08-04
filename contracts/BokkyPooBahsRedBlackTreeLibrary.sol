@@ -148,6 +148,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         _aggregateRecursive(self, yParent, aggregate);
     }
 
+    // https://arxiv.org/pdf/1602.02120.pdf
+    // changes from original
+    // - handle empty
+
     // to avoid stack too deep
     struct JoinParams {
         uint80 left; uint80 key; uint80 right;
@@ -188,49 +192,115 @@ library BokkyPooBahsRedBlackTreeLibrary {
 //        return (params.left, tBlackHeight + (self.nodes[params.left].red ? 0 : 1));
     }
 
+    struct JoinLeftCallStack {
+        uint80 right;
+    }
+
     // destructive func
     function joinLeft(Tree storage self, JoinParams memory params,
         function (uint80) returns (bool) aggregate
     )
-    internal returns (uint80, uint8) {
-        console.log("joinLeft left %s key %s right %s",
-            uint256(params.left), uint256(params.key), uint256(params.right));
-        console.log("  leftBlackHeight %s rightBlackHeight %s",
-            uint256(params.leftBlackHeight), uint256(params.rightBlackHeight));
+    internal returns (uint80 resultKey) {
+        JoinLeftCallStack[80] memory stacks;
+        uint i;
 
-        if (!self.nodes[params.right].red && params.leftBlackHeight == params.rightBlackHeight) {
-            self.nodes[params.key].red = true;
-            self.nodes[params.key].left = params.left;
-            self.nodes[params.key].right = params.right;
-            aggregate(params.key);
-            return (params.key, params.leftBlackHeight);
+        while (true) {
+            console.log("joinLeft left %s key %s right %s",
+                        uint256(params.left), uint256(params.key), uint256(params.right));
+            console.log("  i %s", uint256(i));
+            if (!self.nodes[params.right].red && params.leftBlackHeight == params.rightBlackHeight) {
+                console.log("joinLeft last %s %s", params.left, params.right);
+                self.nodes[params.key].red = true;
+                self.nodes[params.key].left = params.left;
+                self.nodes[params.key].right = params.right;
+                if (params.left != EMPTY) {
+                    self.nodes[params.left].parent = params.key;
+                }
+                if (params.right != EMPTY) {
+                    self.nodes[params.right].parent = params.key;
+                }
+                aggregate(params.key);
+                resultKey = params.key;
+                break;
+            }
+
+            stacks[i] = JoinLeftCallStack({
+                right: params.right
+            });
+            params.rightBlackHeight -= self.nodes[params.right].red ? 0 : 1;
+            params.right = self.nodes[params.right].left;
+            i++;
         }
 
-        (uint80 t, uint8 tBlackHeight) = joinLeft(self, JoinParams({
-        left: params.left,
-        key: params.key,
-        right: self.nodes[params.right].left,
-        leftBlackHeight: params.leftBlackHeight,
-        rightBlackHeight: params.rightBlackHeight - (self.nodes[params.right].red ? 0 : 1)
-        }), aggregate);
-        self.nodes[params.right].left = t;
-        aggregate(params.right);
+        if (i == 0) return (resultKey);
+        i--;
 
-        if (!self.nodes[params.right].red && self.nodes[t].red && self.nodes[self.nodes[t].left].red) {
-            self.nodes[self.nodes[t].left].red = false;
-            rotateRight(self, params.right, aggregate);
-            return (t, params.rightBlackHeight);
-//            return (self.nodes[params.right].parent, tBlackHeight + 1); // TODO: replace with t
+        console.log("joinLeft second loop begin %s", i);
+        while (true) {
+            uint80 right = stacks[i].right;
+            self.nodes[right].left = resultKey;
+            self.nodes[right].parent = EMPTY;
+            if (resultKey != EMPTY) {
+                self.nodes[resultKey].parent = right;
+            }
+            aggregate(right);
+
+            console.log("joinLeft second loop resultKey %s right %s", resultKey, right);
+            console.log("joinLeft second loop 5.left %s", self.nodes[5].left);
+
+            if (!self.nodes[right].red && self.nodes[resultKey].red && self.nodes[self.nodes[resultKey].left].red) {
+                self.nodes[self.nodes[resultKey].left].red = false;
+                rotateRight(self, right, aggregate);
+                console.log("joinLeft second loop 1 i %s resultKey %s", i, resultKey);
+            } else {
+                resultKey = right;
+                console.log("joinLeft second loop 2 i %s resultKey %s", i, resultKey);
+            }
+            console.log("joinLeft second loop 5.left2 %s", self.nodes[5].left);
+
+            if (i == 0) break;
+            i--;
         }
-        return (params.right, params.rightBlackHeight);
-//        return (params.right, tBlackHeight + (self.nodes[params.right].red ? 0 : 1));
+
+//        console.log("joinLeft left %s key %s right %s",
+//            uint256(params.left), uint256(params.key), uint256(params.right));
+//        console.log("  leftBlackHeight %s rightBlackHeight %s",
+//            uint256(params.leftBlackHeight), uint256(params.rightBlackHeight));
+//
+//        if (!self.nodes[params.right].red && params.leftBlackHeight == params.rightBlackHeight) {
+//            self.nodes[params.key].red = true;
+//            self.nodes[params.key].left = params.left;
+//            self.nodes[params.key].right = params.right;
+//            aggregate(params.key);
+//            return (params.key, params.leftBlackHeight);
+//        }
+//
+//        (uint80 t, uint8 tBlackHeight) = joinLeft(self, JoinParams({
+//        left: params.left,
+//        key: params.key,
+//        right: self.nodes[params.right].left,
+//        leftBlackHeight: params.leftBlackHeight,
+//        rightBlackHeight: params.rightBlackHeight - (self.nodes[params.right].red ? 0 : 1)
+//        }), aggregate);
+//        self.nodes[params.right].left = t;
+//        aggregate(params.right);
+//
+//        if (!self.nodes[params.right].red && self.nodes[t].red && self.nodes[self.nodes[t].left].red) {
+//            self.nodes[self.nodes[t].left].red = false;
+//            rotateRight(self, params.right, aggregate);
+//            return (t, params.rightBlackHeight);
+////            return (self.nodes[params.right].parent, tBlackHeight + 1); // TODO: replace with t
+//        }
+//        return (params.right, params.rightBlackHeight);
+////        return (params.right, tBlackHeight + (self.nodes[params.right].red ? 0 : 1));
     }
 
     // destructive func
     function join(Tree storage self, uint80 left, uint80 key, uint80 right, function (uint80) returns (bool) aggregate,
         uint8 leftBlackHeight, uint8 rightBlackHeight
 ) private returns (uint80 t, uint8 tBlackHeight) {
-        console.log("join");
+        console.log("join left %s key %s right %s",
+            left, key, right);
         if (leftBlackHeight > rightBlackHeight) {
             (t, tBlackHeight) = joinRight(self, JoinParams({
             left: left,
@@ -239,18 +309,20 @@ library BokkyPooBahsRedBlackTreeLibrary {
             leftBlackHeight: leftBlackHeight,
             rightBlackHeight: rightBlackHeight
             }), aggregate);
+            tBlackHeight = leftBlackHeight;
             if (self.nodes[t].red && self.nodes[self.nodes[t].right].red) {
                 self.nodes[t].red = false;
                 tBlackHeight += 1;
             }
         } else if (leftBlackHeight < rightBlackHeight) {
-            (t, tBlackHeight) = joinLeft(self, JoinParams({
-            left: left,
-            key: key,
-            right: right,
-            leftBlackHeight: leftBlackHeight,
-            rightBlackHeight: rightBlackHeight
+            t = joinLeft(self, JoinParams({
+                left: left,
+                key: key,
+                right: right,
+                leftBlackHeight: leftBlackHeight,
+                rightBlackHeight: rightBlackHeight
             }), aggregate);
+            tBlackHeight = rightBlackHeight;
             if (self.nodes[t].red && self.nodes[self.nodes[t].left].red) {
                 self.nodes[t].red = false;
                 tBlackHeight += 1;
@@ -265,34 +337,55 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
+    struct SplitRightCallStack {
+        uint80 t;
+        uint8 childBlackHeight;
+    }
+
     // destructive func
     function splitRight(Tree storage self, uint80 t, uint80 key,
         function (uint80, uint80) returns (bool) lessThan,
         function (uint80) returns (bool) aggregate,
         uint8 blackHeight)
-    private returns (uint80, uint8) {
-        console.log("splitRight");
-        if (t == EMPTY) return (EMPTY, blackHeight); // TODO: correct?
-        uint8 childBlackHeight = blackHeight - (self.nodes[t].red ? 0 : 1);
-        console.log("splitRight 2");
-        if (key == t) return (self.nodes[t].right, childBlackHeight);
-        if (lessThan(key, t)) {
-            console.log("splitRight 3");
-            (uint80 r, uint8 rBlackHeight) = splitRight(
-                self, self.nodes[t].left, key, lessThan, aggregate,
-                childBlackHeight);
-//            if (r == EMPTY) {
-//                return (self.nodes[t].right, childBlackHeight);
-//            }
-            return join(self, r, t, self.nodes[t].right, aggregate,
-                rBlackHeight, childBlackHeight);
-        } else {
-            console.log("splitRight 4");
-            // wikipedia is wrong
-//            return (self.nodes[t].right, childBlackHeight);
-            // https://arxiv.org/pdf/1602.02120.pdf
-            return splitRight(self, self.nodes[t].right, key, lessThan, aggregate,
-                childBlackHeight);
+    private returns (uint80 resultKey, uint8 resultBlackHeight) {
+        SplitRightCallStack[80] memory stacks;
+        uint i;
+
+        while (true) {
+            if (t == EMPTY) {
+                resultKey = EMPTY;
+                resultBlackHeight = blackHeight;
+                break;
+            }
+            uint8 childBlackHeight = blackHeight - (self.nodes[t].red ? 0 : 1);
+            if (key == t) {
+                resultKey = self.nodes[t].right;
+                resultBlackHeight = childBlackHeight;
+                break;
+            }
+
+            blackHeight = childBlackHeight;
+            if (lessThan(key, t)) {
+                stacks[i] = SplitRightCallStack({
+                    t: t,
+                    childBlackHeight: childBlackHeight
+                });
+                t = self.nodes[t].left;
+            } else {
+                t = self.nodes[t].right;
+            }
+            i++;
+        }
+
+        while (true) {
+            SplitRightCallStack memory stack = stacks[i];
+            if (stack.t != EMPTY) {
+                (resultKey, resultBlackHeight) = join(
+                    self, resultKey, stack.t, self.nodes[stack.t].right, aggregate,
+                    resultBlackHeight, stack.childBlackHeight);
+            }
+            if (i == 0) break;
+            i--;
         }
     }
 
