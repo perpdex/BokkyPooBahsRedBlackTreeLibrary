@@ -18,6 +18,7 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
+    mapping(uint80 => uint256) public sums;
 
     event Log(string where, uint80 key, uint256 value);
 
@@ -106,7 +107,12 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         return key0 < key1;
     }
 
-    function aggregate(uint80 key) private returns (bool) {
-        return true;
+    function aggregate(uint80 key) private returns (bool stop) {
+        uint256 prev = sums[key];
+        sums[key] =
+            sums[tree.nodes[key].left] +
+            sums[tree.nodes[key].right] +
+            key;
+        stop = sums[key] == prev;
     }
 }

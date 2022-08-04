@@ -1,12 +1,17 @@
 import { expect } from "chai";
 import _ from "lodash";
+import { BigNumber } from "ethers";
 
 const checkNode = async (tree, node) => {
   const { left, right, red } = await tree.getNode(node);
+  const sum = await tree.sums(node);
   let leftBlackHeight = 1;
   let rightBlackHeight = 1;
+  let leftSum = BigNumber.from(0);
+  let rightSum = BigNumber.from(0);
   if (!left.eq(0)) {
     const leftNode = await tree.getNode(left);
+    leftSum = await tree.sums(left);
     if (red) {
       expect(leftNode.red).to.eq(false);
     }
@@ -16,6 +21,7 @@ const checkNode = async (tree, node) => {
   }
   if (!right.eq(0)) {
     const rightNode = await tree.getNode(right);
+    rightSum = await tree.sums(right);
     if (red) {
       expect(rightNode.red).to.eq(false);
     }
@@ -24,6 +30,7 @@ const checkNode = async (tree, node) => {
     rightBlackHeight = rightRes.blackHeight;
   }
   expect(leftBlackHeight).to.eq(rightBlackHeight);
+  expect(sum).to.eq(leftSum.add(rightSum).add(node));
   return {
     blackHeight: leftBlackHeight + (red ? 0 : 1),
   };

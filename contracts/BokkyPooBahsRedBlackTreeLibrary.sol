@@ -151,7 +151,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         } else {
             self.nodes[cursor].right = key;
         }
-        _aggregateRecursive(self, cursor, aggregate);
+        _aggregateRecursive(self, key, aggregate);
         insertFixup(self, key, aggregate);
     }
 
@@ -477,7 +477,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             if (!stopped) {
                 stopped = aggregate(key);
             }
-            //            if (stopped && stoppedBlackHeight) return;
+            if (stopped) return;
             key = self.nodes[key].parent;
         }
     }
