@@ -203,6 +203,12 @@ library BokkyPooBahsRedBlackTreeLibrary {
             removeFixup(self, probe, aggregate);
         }
         _aggregateRecursive(self, yParent, aggregate);
+
+        // Fixed a bug that caused the parent of empty nodes to be non-zero.
+        // TODO: Fix it the right way.
+        if (probe == EMPTY) {
+            self.nodes[probe].parent = EMPTY;
+        }
     }
 
     // https://arxiv.org/pdf/1602.02120.pdf
