@@ -215,6 +215,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
     // https://arxiv.org/pdf/1602.02120.pdf
     // changes from original
     // - handle empty
+    // - handle parent
+    // - change root to black
 
     // to avoid stack too deep
     struct JoinParams {
@@ -272,10 +274,6 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
         return (params.left, params.leftBlackHeight);
         //        return (params.left, tBlackHeight + (self.nodes[params.left].red ? 0 : 1));
-    }
-
-    struct JoinLeftCallStack {
-        uint40 right;
     }
 
     // destructive func
@@ -391,11 +389,6 @@ library BokkyPooBahsRedBlackTreeLibrary {
             aggregate(key);
             (t, tBlackHeight) = (key, leftBlackHeight + (red ? 0 : 1));
         }
-    }
-
-    struct SplitRightCallStack {
-        uint40 t;
-        uint8 childBlackHeight;
     }
 
     // destructive func
