@@ -468,6 +468,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
             aggregate,
             128
         );
+        self.nodes[self.root].parent = EMPTY;
+        self.nodes[self.root].red = false;
     }
 
     function _aggregateRecursive(
