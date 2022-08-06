@@ -20,6 +20,7 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
+    bool reversed;
 
     event Log(string where, uint40 key, uint256 value);
 
@@ -104,8 +105,8 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         tree.removeLeft(_key, lessThan, aggregate);
     }
 
-    function lessThan(uint40 key0, uint40 key1) private pure returns (bool) {
-        return key0 < key1;
+    function lessThan(uint40 key0, uint40 key1) private view returns (bool) {
+        return reversed ? key0 > key1 : key0 < key1;
     }
 
     function aggregate(uint40 key) private returns (bool stop) {
@@ -119,5 +120,9 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
 
     function sums(uint40 key) external view returns (uint256) {
         return tree.nodes[key].userData;
+    }
+
+    function setReversed(bool reversedArg) public {
+        reversed = reversedArg;
     }
 }

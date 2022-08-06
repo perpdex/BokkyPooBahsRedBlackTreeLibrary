@@ -44,34 +44,39 @@ describe("consistency", () => {
   });
 
   describe("random", () => {
-    it("ok", async () => {
-      const generator = new MersenneTwister(1);
+    [false, true].forEach((reversed) => {
+      it("reversed " + reversed, async () => {
+        await tree.setReversed(reversed);
+        const generator = new MersenneTwister(1);
 
-      let keys = [];
-      for (let i = 0; i < 100; i++) {
-        const op = generator.random_int() % 100;
-        if (op < 40) {
-          const key = 1 + generator.random_int();
-          if (_.includes(keys, key)) continue;
-          keys.push(key);
-          await tree.insert(key);
-        } else if (op < 80) {
-          if (_.isEmpty(keys)) continue;
-          const idx = generator.random_int() % keys.length;
-          const key = keys[idx];
-          keys = _.filter(keys, (x) => x != key);
-          await tree.remove(key);
-        } else {
-          if (_.isEmpty(keys)) continue;
-          const idx = generator.random_int() % keys.length;
-          const key = keys[idx];
-          keys = _.filter(keys, (x) => x > key);
-          await tree.removeLeft(key);
+        let keys = [];
+        for (let i = 0; i < 100; i++) {
+          const op = generator.random_int() % 100;
+          if (op < 40) {
+            const key = 1 + generator.random_int();
+            if (_.includes(keys, key)) continue;
+            keys.push(key);
+            await tree.insert(key);
+          } else if (op < 80) {
+            if (_.isEmpty(keys)) continue;
+            const idx = generator.random_int() % keys.length;
+            const key = keys[idx];
+            keys = _.filter(keys, (x) => x != key);
+            await tree.remove(key);
+          } else {
+            if (_.isEmpty(keys)) continue;
+            const idx = generator.random_int() % keys.length;
+            const key = keys[idx];
+            keys = _.filter(keys, (x) => (reversed ? x < key : x > key));
+            await tree.removeLeft(key);
+          }
+
+          expect(await getKeys(tree)).to.deep.eq(
+            _.sortBy(keys, (x) => (reversed ? -x : x))
+          );
+          await checkConsistency(tree, reversed);
         }
-
-        expect(await getKeys(tree)).to.deep.eq(_.sortBy(keys));
-        await checkConsistency(tree);
-      }
+      });
     });
   });
 });

@@ -45,9 +45,9 @@ const checkRedBlackConditions = async (tree) => {
   }
 };
 
-export const checkConsistency = async (tree) => {
+export const checkConsistency = async (tree, reversed?: boolean) => {
   const keys = await getKeys(tree);
-  expect(keys).to.deep.eq(_.sortBy(keys));
+  expect(keys).to.deep.eq(_.sortBy(keys, (x) => (reversed ? -x : x)));
 
   const emptyNode = await tree.getNodeUnsafe(0);
   expect(emptyNode.parent).to.eq(0);
