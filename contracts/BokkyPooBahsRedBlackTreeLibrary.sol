@@ -123,6 +123,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
     function insert(
         Tree storage self,
         uint40 key,
+        uint128 userData,
         function(uint40, uint40) view returns (bool) lessThan,
         function(uint40) returns (bool) aggregate
     ) internal {
@@ -143,7 +144,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             left: EMPTY,
             right: EMPTY,
             red: true,
-            userData: 0
+            userData: userData
         });
         if (cursor == EMPTY) {
             self.root = key;

@@ -67,7 +67,7 @@ contract TestBokkyPooBahsRedBlackTree {
     }
 
     function insert(uint40 _key, uint256 _value) public {
-        tree.insert(_key, lessThan, aggregate);
+        tree.insert(_key, 0, lessThan, aggregate);
         values[_key] = _value;
         emit Log("insert", _key, _value);
     }
