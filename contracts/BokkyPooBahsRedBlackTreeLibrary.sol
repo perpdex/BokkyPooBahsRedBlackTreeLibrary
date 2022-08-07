@@ -13,12 +13,8 @@ pragma solidity ^0.8.0;
 // Enjoy. (c) BokkyPooBah / Bok Consulting Pty Ltd 2020. The MIT Licence.
 // ----------------------------------------------------------------------------
 
-import "hardhat/console.sol";
-
 library BokkyPooBahsRedBlackTreeLibrary {
     struct Node {
-        // TODO: id reuse (not improve security? improve gas)
-        // TODO: id 40bit (too small?)
         uint40 parent;
         uint40 left;
         uint40 right;
@@ -235,8 +231,6 @@ library BokkyPooBahsRedBlackTreeLibrary {
         JoinParams memory params,
         function(uint40) returns (bool) aggregate
     ) private returns (uint40, uint8) {
-        console.log("joinRight");
-
         if (
             !self.nodes[params.left].red &&
             params.leftBlackHeight == params.rightBlackHeight
@@ -284,11 +278,6 @@ library BokkyPooBahsRedBlackTreeLibrary {
         JoinParams memory params,
         function(uint40) returns (bool) aggregate
     ) internal returns (uint40 resultKey) {
-        //        console.log("joinLeft left %s key %s right %s",
-        //            uint256(params.left), uint256(params.key), uint256(params.right));
-        //        console.log("  leftBlackHeight %s rightBlackHeight %s",
-        //            uint256(params.leftBlackHeight), uint256(params.rightBlackHeight));
-
         if (
             !self.nodes[params.right].red &&
             params.leftBlackHeight == params.rightBlackHeight
@@ -347,8 +336,6 @@ library BokkyPooBahsRedBlackTreeLibrary {
         uint8 leftBlackHeight,
         uint8 rightBlackHeight
     ) private returns (uint40 t, uint8 tBlackHeight) {
-        //        console.log("join left %s key %s right %s",
-        //            left, key, right);
         if (leftBlackHeight > rightBlackHeight) {
             (t, tBlackHeight) = joinRight(
                 self,
@@ -402,13 +389,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         function(uint40) returns (bool) aggregate,
         uint8 blackHeight
     ) private returns (uint40 resultKey, uint8 resultBlackHeight) {
-        //        console.log("splitRight");
         if (t == EMPTY) return (EMPTY, blackHeight);
         uint8 childBlackHeight = blackHeight - (self.nodes[t].red ? 0 : 1);
-        //        console.log("splitRight 2");
         if (key == t) return (self.nodes[t].right, childBlackHeight);
         if (lessThan(key, t)) {
-            //            console.log("splitRight 3");
             (uint40 r, uint8 rBlackHeight) = splitRight(
                 self,
                 self.nodes[t].left,
@@ -417,9 +401,6 @@ library BokkyPooBahsRedBlackTreeLibrary {
                 aggregate,
                 childBlackHeight
             );
-            //            if (r == EMPTY) {
-            //                return (self.nodes[t].right, childBlackHeight);
-            //            }
             return
                 join(
                     self,
@@ -431,10 +412,6 @@ library BokkyPooBahsRedBlackTreeLibrary {
                     childBlackHeight
                 );
         } else {
-            //            console.log("splitRight 4");
-            // wikipedia is wrong
-            //            return (self.nodes[t].right, childBlackHeight);
-            // https://arxiv.org/pdf/1602.02120.pdf
             return
                 splitRight(
                     self,
