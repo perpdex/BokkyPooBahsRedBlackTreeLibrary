@@ -131,6 +131,13 @@ library BokkyPooBahsRedBlackTreeLibrary {
         require(!exists(self, key), "RBTL_I: key already exists");
         uint40 cursor = EMPTY;
         uint40 probe = self.root;
+        self.nodes[key] = Node({
+            parent: EMPTY,
+            left: EMPTY,
+            right: EMPTY,
+            red: true,
+            userData: userData
+        });
         while (probe != EMPTY) {
             cursor = probe;
             if (lessThan(key, probe)) {
@@ -139,13 +146,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
                 probe = self.nodes[probe].right;
             }
         }
-        self.nodes[key] = Node({
-            parent: cursor,
-            left: EMPTY,
-            right: EMPTY,
-            red: true,
-            userData: userData
-        });
+        self.nodes[key].parent = cursor;
         if (cursor == EMPTY) {
             self.root = key;
         } else if (lessThan(key, cursor)) {
