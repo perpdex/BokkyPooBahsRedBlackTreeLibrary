@@ -3,7 +3,7 @@ import { waffle } from "hardhat";
 import { TestBokkyPooBahsRedBlackTreeRaw } from "../typechain";
 import { createFixture } from "./fixtures";
 import _ from "lodash";
-import { checkConsistency, getKeys } from "./helper";
+import { checkConsistency, checkSubtreeRemoved, getKeys } from "./helper";
 
 describe("removeLeft", () => {
   let loadFixture = waffle.createFixtureLoader(waffle.provider.getWallets());
@@ -23,6 +23,7 @@ describe("removeLeft", () => {
       await tree.removeLeft(10);
       expect(await getKeys(tree)).to.deep.eq(_.range(11, 100));
       await checkConsistency(tree);
+      await checkSubtreeRemoved(tree, _.range(1, 11));
     });
   });
 
@@ -33,6 +34,7 @@ describe("removeLeft", () => {
       await tree.removeLeft(99);
       expect(await getKeys(tree)).to.deep.eq([]);
       await checkConsistency(tree);
+      await checkSubtreeRemoved(tree, _.range(1, 100));
     });
   });
 

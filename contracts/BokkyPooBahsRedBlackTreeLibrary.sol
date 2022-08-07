@@ -242,7 +242,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             return (params.key, params.leftBlackHeight);
         }
 
-        (uint40 t, uint8 tBlackHeight) = joinRight(
+        (uint40 t, ) = joinRight(
             self,
             JoinParams({
                 left: self.nodes[params.left].right,
@@ -387,11 +387,15 @@ library BokkyPooBahsRedBlackTreeLibrary {
         uint40 key,
         function(uint40, uint40) returns (bool) lessThan,
         function(uint40) returns (bool) aggregate,
+        function(uint40) subtreeRemoved,
         uint8 blackHeight
     ) private returns (uint40 resultKey, uint8 resultBlackHeight) {
         if (t == EMPTY) return (EMPTY, blackHeight);
-        uint8 childBlackHeight = blackHeight - (self.nodes[t].red ? 0 : 1);
-        if (key == t) return (self.nodes[t].right, childBlackHeight);
+        blackHeight -= (self.nodes[t].red ? 0 : 1);
+        if (key == t) {
+            subtreeRemoved(t);
+            return (self.nodes[t].right, blackHeight);
+        }
         if (lessThan(key, t)) {
             (uint40 r, uint8 rBlackHeight) = splitRight(
                 self,
@@ -399,7 +403,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
                 key,
                 lessThan,
                 aggregate,
-                childBlackHeight
+                subtreeRemoved,
+                blackHeight
             );
             return
                 join(
@@ -409,9 +414,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
                     self.nodes[t].right,
                     aggregate,
                     rBlackHeight,
-                    childBlackHeight
+                    blackHeight
                 );
         } else {
+            subtreeRemoved(t);
             return
                 splitRight(
                     self,
@@ -419,7 +425,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
                     key,
                     lessThan,
                     aggregate,
-                    childBlackHeight
+                    subtreeRemoved,
+                    blackHeight
                 );
         }
     }
@@ -428,7 +435,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
         Tree storage self,
         uint40 key,
         function(uint40, uint40) returns (bool) lessThan,
-        function(uint40) returns (bool) aggregate
+        function(uint40) returns (bool) aggregate,
+        function(uint40) subtreeRemoved
     ) internal {
         require(key != EMPTY, "RBTL_RL: key is empty");
         require(exists(self, key), "RBTL_RL: key not exist");
@@ -438,6 +446,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             key,
             lessThan,
             aggregate,
+            subtreeRemoved,
             128
         );
         self.nodes[self.root].parent = EMPTY;

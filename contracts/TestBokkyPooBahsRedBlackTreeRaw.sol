@@ -21,6 +21,7 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
 
     BokkyPooBahsRedBlackTreeLibrary.Tree tree;
     bool reversed;
+    mapping(uint40 => bool) public subtreeRemoved;
 
     event Log(string where, uint40 key, uint256 value);
 
@@ -102,20 +103,51 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     }
 
     function removeLeft(uint40 _key) public {
-        tree.removeLeft(_key, lessThan, aggregate);
+        tree.removeLeft(_key, lessThan, aggregate, subtreeRemovedCallback);
     }
 
     function lessThan(uint40 key0, uint40 key1) private view returns (bool) {
+        require(key0 != 0, "lessThan key0 assert");
+        require(key1 != 0, "lessThan key1 assert");
         return reversed ? key0 > key1 : key0 < key1;
     }
 
     function aggregate(uint40 key) private returns (bool stop) {
+        require(key != 0, "aggregate assert");
+
         uint128 prevSum = tree.nodes[key].userData;
         uint128 sum = tree.nodes[tree.nodes[key].left].userData +
             tree.nodes[tree.nodes[key].right].userData +
             key;
         tree.nodes[key].userData = sum;
         stop = sum == prevSum;
+    }
+
+    function subtreeRemovedCallback(uint40 key) private {
+        require(key != 0, "subtreeRemovedCallback assert");
+        subtreeRemoved[key] = true;
+    }
+
+    function subtreeRemovedRecursive(uint40[] calldata keys)
+        external
+        view
+        returns (bool[] memory result)
+    {
+        result = new bool[](keys.length);
+        for (uint256 i = 0; i < keys.length; ++i) {
+            uint40 key = keys[i];
+            require(key != 0, "subtreeRemovedRecursive assert");
+
+            bool res;
+            while (key != 0) {
+                if (subtreeRemoved[key]) {
+                    res = true;
+                    break;
+                }
+                key = tree.nodes[key].parent;
+            }
+            result[i] = res;
+        }
     }
 
     function sums(uint40 key) external view returns (uint256) {

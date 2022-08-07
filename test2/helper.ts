@@ -3,6 +3,9 @@ import _ from "lodash";
 import { BigNumber } from "ethers";
 
 const checkNode = async (tree, node) => {
+  const subtreeRemoved = await tree.subtreeRemoved(node);
+  expect(subtreeRemoved).to.eq(false);
+
   const { left, right, red } = await tree.getNode(node);
   const sum = await tree.sums(node);
   let leftBlackHeight = 1;
@@ -55,6 +58,9 @@ export const checkConsistency = async (tree, reversed?: boolean) => {
   expect(emptyNode.right).to.eq(0);
   expect(emptyNode.red).to.eq(false);
 
+  const subtreeRemoved = await tree.subtreeRemoved(0);
+  expect(subtreeRemoved).to.eq(false);
+
   await checkRedBlackConditions(tree);
 };
 
@@ -66,4 +72,9 @@ export const getKeys = async (tree) => {
     key = await tree.next(key);
   }
   return keys;
+};
+
+export const checkSubtreeRemoved = async (tree, removedKeys) => {
+  const removed = await tree.subtreeRemovedRecursive(removedKeys);
+  expect(removed).to.deep.eq(_.map(removedKeys, () => true));
 };

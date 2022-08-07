@@ -1,7 +1,7 @@
 import { waffle } from "hardhat";
 import { TestBokkyPooBahsRedBlackTreeRaw } from "../typechain";
 import { createFixture } from "./fixtures";
-import { checkConsistency, getKeys } from "./helper";
+import { checkConsistency, checkSubtreeRemoved, getKeys } from "./helper";
 import { expect } from "chai";
 import _ from "lodash";
 import MersenneTwister from "mersenne-twister";
@@ -67,8 +67,12 @@ describe("consistency", () => {
             if (_.isEmpty(keys)) continue;
             const idx = generator.random_int() % keys.length;
             const key = keys[idx];
+            const removedKeys = _.filter(keys, (x) =>
+              reversed ? x >= key : x <= key
+            );
             keys = _.filter(keys, (x) => (reversed ? x < key : x > key));
             await tree.removeLeft(key);
+            await checkSubtreeRemoved(tree, removedKeys);
           }
 
           expect(await getKeys(tree)).to.deep.eq(
