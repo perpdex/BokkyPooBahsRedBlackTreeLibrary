@@ -150,7 +150,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         } else {
             self.nodes[cursor].right = key;
         }
-        _aggregateRecursive(self, key, aggregate);
+        aggregateRecursively(self, key, aggregate);
         insertFixup(self, key, aggregate);
     }
 
@@ -196,12 +196,12 @@ library BokkyPooBahsRedBlackTreeLibrary {
             self.nodes[self.nodes[cursor].right].parent = cursor;
             self.nodes[cursor].red = self.nodes[key].red;
             (cursor, key) = (key, cursor);
-            _aggregateRecursive(self, key, aggregate);
+            aggregateRecursively(self, key, aggregate);
         }
         if (doFixup) {
             removeFixup(self, probe, aggregate);
         }
-        _aggregateRecursive(self, yParent, aggregate);
+        aggregateRecursively(self, yParent, aggregate);
 
         // Fixed a bug that caused the parent of empty nodes to be non-zero.
         // TODO: Fix it the right way.
@@ -453,11 +453,11 @@ library BokkyPooBahsRedBlackTreeLibrary {
         self.nodes[self.root].red = false;
     }
 
-    function _aggregateRecursive(
+    function aggregateRecursively(
         Tree storage self,
         uint40 key,
         function(uint40) returns (bool) aggregate
-    ) private {
+    ) internal {
         while (key != EMPTY) {
             if (aggregate(key)) return;
             key = self.nodes[key].parent;
