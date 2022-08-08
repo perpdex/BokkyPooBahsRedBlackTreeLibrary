@@ -67,26 +67,26 @@ contract TestBokkyPooBahsRedBlackTree {
     }
 
     function insert(uint40 _key, uint256 _value) public {
-        tree.insert(_key, 0, lessThan, aggregate);
+        tree.insert(_key, 0, lessThan, aggregate, 0);
         values[_key] = _value;
         emit Log("insert", _key, _value);
     }
 
     function remove(uint40 _key) public {
-        tree.remove(_key, aggregate);
+        tree.remove(_key, aggregate, 0);
         emit Log("remove", _key, values[_key]);
         delete values[_key];
     }
 
     function lessThan(
-        BokkyPooBahsRedBlackTreeLibrary.Tree storage tree,
         uint40 key0,
-        uint40 key1
+        uint40 key1,
+        uint256 data
     ) private pure returns (bool) {
         return key0 < key1;
     }
 
-    function aggregate(uint40 key) private returns (bool) {
+    function aggregate(uint40 key, uint256 data) private returns (bool) {
         return true;
     }
 }

@@ -19,36 +19,40 @@ import "./BokkyPooBahsRedBlackTreeLibrary.sol";
 contract TestBokkyPooBahsRedBlackTreeRaw {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
 
-    BokkyPooBahsRedBlackTreeLibrary.Tree tree;
-    bool reversed;
-    mapping(uint40 => bool) public subtreeRemoved;
+    struct Data {
+        BokkyPooBahsRedBlackTreeLibrary.Tree tree;
+        bool reversed;
+        mapping(uint40 => bool) subtreeRemoved;
+    }
+
+    Data data;
 
     event Log(string where, uint40 key, uint256 value);
 
     constructor() public {}
 
     function root() public view returns (uint256 _key) {
-        _key = tree.root;
+        _key = data.tree.root;
     }
 
     function first() public view returns (uint256 _key) {
-        _key = tree.first();
+        _key = data.tree.first();
     }
 
     function last() public view returns (uint256 _key) {
-        _key = tree.last();
+        _key = data.tree.last();
     }
 
     function next(uint40 key) public view returns (uint256 _key) {
-        _key = tree.next(key);
+        _key = data.tree.next(key);
     }
 
     function prev(uint40 key) public view returns (uint256 _key) {
-        _key = tree.prev(key);
+        _key = data.tree.prev(key);
     }
 
     function exists(uint40 key) public view returns (bool _exists) {
-        _exists = tree.exists(key);
+        _exists = data.tree.exists(key);
     }
 
     function getNode(uint40 _key)
@@ -62,7 +66,7 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
             bool red
         )
     {
-        (key, parent, left, right, red) = tree.getNode(_key);
+        (key, parent, left, right, red) = data.tree.getNode(_key);
     }
 
     function getNodeUnsafe(uint40 _key)
@@ -76,7 +80,9 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
             bool red
         )
     {
-        BokkyPooBahsRedBlackTreeLibrary.Node memory node = tree.nodes[_key];
+        BokkyPooBahsRedBlackTreeLibrary.Node memory node = data.tree.nodes[
+            _key
+        ];
         (key, parent, left, right, red) = (
             key,
             node.parent,
@@ -87,7 +93,7 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     }
 
     function insert(uint40 _key) public {
-        tree.insert(_key, 0, lessThan, aggregate);
+        data.tree.insert(_key, 0, lessThan, aggregate, getSlot(data));
         // emit Log("insert", _key, 0);
     }
 
@@ -98,38 +104,57 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
     }
 
     function remove(uint40 _key) public {
-        tree.remove(_key, aggregate);
+        data.tree.remove(_key, aggregate, getSlot(data));
         // emit Log("remove", _key, 0);
     }
 
     function removeLeft(uint40 _key) public {
-        tree.removeLeft(_key, lessThan, aggregate, subtreeRemovedCallback);
+        data.tree.removeLeft(
+            _key,
+            lessThan,
+            aggregate,
+            subtreeRemovedCallback,
+            getSlot(data)
+        );
     }
 
     function lessThan(
-        BokkyPooBahsRedBlackTreeLibrary.Tree storage tree,
         uint40 key0,
-        uint40 key1
+        uint40 key1,
+        uint256 dataSlot
     ) private view returns (bool) {
+        Data storage d = getData(dataSlot);
+
         require(key0 != 0, "lessThan key0 assert");
         require(key1 != 0, "lessThan key1 assert");
-        return reversed ? key0 > key1 : key0 < key1;
+        return d.reversed ? key0 > key1 : key0 < key1;
     }
 
-    function aggregate(uint40 key) private returns (bool stop) {
+    function aggregate(uint40 key, uint256 dataSlot)
+        private
+        returns (bool stop)
+    {
+        Data storage d = getData(dataSlot);
+
         require(key != 0, "aggregate assert");
 
-        uint128 prevSum = tree.nodes[key].userData;
-        uint128 sum = tree.nodes[tree.nodes[key].left].userData +
-            tree.nodes[tree.nodes[key].right].userData +
+        uint128 prevSum = d.tree.nodes[key].userData;
+        uint128 sum = d.tree.nodes[d.tree.nodes[key].left].userData +
+            d.tree.nodes[d.tree.nodes[key].right].userData +
             key;
-        tree.nodes[key].userData = sum;
+        d.tree.nodes[key].userData = sum;
         stop = sum == prevSum;
     }
 
-    function subtreeRemovedCallback(uint40 key) private {
+    function subtreeRemovedCallback(uint40 key, uint256 dataSlot) private {
+        Data storage d = getData(dataSlot);
+
         require(key != 0, "subtreeRemovedCallback assert");
-        subtreeRemoved[key] = true;
+        d.subtreeRemoved[key] = true;
+    }
+
+    function subtreeRemoved(uint40 key) external view returns (bool) {
+        return data.subtreeRemoved[key];
     }
 
     function subtreeRemovedRecursive(uint40[] calldata keys)
@@ -144,21 +169,33 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
 
             bool res;
             while (key != 0) {
-                if (subtreeRemoved[key]) {
+                if (data.subtreeRemoved[key]) {
                     res = true;
                     break;
                 }
-                key = tree.nodes[key].parent;
+                key = data.tree.nodes[key].parent;
             }
             result[i] = res;
         }
     }
 
     function sums(uint40 key) external view returns (uint256) {
-        return tree.nodes[key].userData;
+        return data.tree.nodes[key].userData;
     }
 
     function setReversed(bool reversedArg) public {
-        reversed = reversedArg;
+        data.reversed = reversedArg;
+    }
+
+    function getSlot(Data storage d) private pure returns (uint256 slot) {
+        assembly {
+            slot := d.slot
+        }
+    }
+
+    function getData(uint256 slot) private pure returns (Data storage d) {
+        assembly {
+            d.slot := slot
+        }
     }
 }
