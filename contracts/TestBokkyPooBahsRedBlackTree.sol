@@ -78,7 +78,11 @@ contract TestBokkyPooBahsRedBlackTree {
         delete values[_key];
     }
 
-    function lessThan(uint40 key0, uint40 key1) private pure returns (bool) {
+    function lessThan(
+        BokkyPooBahsRedBlackTreeLibrary.Tree storage tree,
+        uint40 key0,
+        uint40 key1
+    ) private pure returns (bool) {
         return key0 < key1;
     }
 

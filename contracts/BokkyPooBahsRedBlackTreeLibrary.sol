@@ -120,7 +120,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         Tree storage self,
         uint40 key,
         uint128 userData,
-        function(uint40, uint40) view returns (bool) lessThan,
+        function(Tree storage, uint40, uint40) view returns (bool) lessThan,
         function(uint40) returns (bool) aggregate
     ) internal {
         require(key != EMPTY, "RBTL_I: key is empty");
@@ -136,7 +136,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         });
         while (probe != EMPTY) {
             cursor = probe;
-            if (lessThan(key, probe)) {
+            if (lessThan(self, key, probe)) {
                 probe = self.nodes[probe].left;
             } else {
                 probe = self.nodes[probe].right;
@@ -145,7 +145,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         self.nodes[key].parent = cursor;
         if (cursor == EMPTY) {
             self.root = key;
-        } else if (lessThan(key, cursor)) {
+        } else if (lessThan(self, key, cursor)) {
             self.nodes[cursor].left = key;
         } else {
             self.nodes[cursor].right = key;
@@ -385,7 +385,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         Tree storage self,
         uint40 t,
         uint40 key,
-        function(uint40, uint40) returns (bool) lessThan,
+        function(Tree storage, uint40, uint40) returns (bool) lessThan,
         function(uint40) returns (bool) aggregate,
         function(uint40) subtreeRemoved,
         uint8 blackHeight
@@ -396,7 +396,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             subtreeRemoved(t);
             return (self.nodes[t].right, blackHeight);
         }
-        if (lessThan(key, t)) {
+        if (lessThan(self, key, t)) {
             (uint40 r, uint8 rBlackHeight) = splitRight(
                 self,
                 self.nodes[t].left,
@@ -434,7 +434,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
     function removeLeft(
         Tree storage self,
         uint40 key,
-        function(uint40, uint40) returns (bool) lessThan,
+        function(Tree storage, uint40, uint40) returns (bool) lessThan,
         function(uint40) returns (bool) aggregate,
         function(uint40) subtreeRemoved
     ) internal {

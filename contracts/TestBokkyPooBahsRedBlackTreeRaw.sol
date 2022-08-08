@@ -106,7 +106,11 @@ contract TestBokkyPooBahsRedBlackTreeRaw {
         tree.removeLeft(_key, lessThan, aggregate, subtreeRemovedCallback);
     }
 
-    function lessThan(uint40 key0, uint40 key1) private view returns (bool) {
+    function lessThan(
+        BokkyPooBahsRedBlackTreeLibrary.Tree storage tree,
+        uint40 key0,
+        uint40 key1
+    ) private view returns (bool) {
         require(key0 != 0, "lessThan key0 assert");
         require(key1 != 0, "lessThan key1 assert");
         return reversed ? key0 > key1 : key0 < key1;
