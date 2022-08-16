@@ -1,0 +1,36 @@
+name: Setup repository
+description: Setup script before test, lint or coverage stage
+runs:
+  using: composite
+  steps:
+    # fix SSH error: git@github.com: Permission denied (publickey).
+    # copy from https://github.com/actions/setup-node/issues/214#issuecomment-810829250
+    - name: Reconfigure git to use HTTP authentication
+      shell: bash
+      run: >
+        git config --global url."https://github.com/".insteadOf
+        ssh://git@github.com/
+
+    - name: Get npm cache directory
+      id: npm-cache
+      shell: bash
+      run: |
+        echo "::set-output name=dir::$(npm config get cache)"
+
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ${{ steps.npm-cache.outputs.dir }}
+          **/node_modules
+        key: ${{ github.job }}-${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ github.job }}-${{ runner.os }}-node-
+
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+
+    - name: Install contract package dependencies
+      shell: bash
+      run: yarn install

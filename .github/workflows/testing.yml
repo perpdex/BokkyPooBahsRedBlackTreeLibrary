@@ -6,27 +6,34 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           persist-credentials: false
           submodules: recursive
 
-      - id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ${{ steps.npm-cache.outputs.dir }}
-            **/node_modules
-          key: ${{ github.job }}-${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ github.job }}-${{ runner.os }}-node-
+      - uses: ./.github/actions/setup
 
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 16.x
-
-      - run: yarn install
       - run: yarn build
-      - run: npx hardhat test
+      - run: yarn test
+  
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: ./.github/actions/setup
+
+      - name: Run contract coverage
+        run: yarn coverage
+        env:
+          # to solve problem of memory leak https://stackoverflow.com/a/59572966
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage-report
+          path: coverage
