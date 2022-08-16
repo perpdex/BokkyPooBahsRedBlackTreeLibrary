@@ -26,6 +26,8 @@ jobs:
 
       - uses: ./.github/actions/setup
 
+      - run: yarn build
+
       - name: Run contract coverage
         run: yarn coverage
         env:
